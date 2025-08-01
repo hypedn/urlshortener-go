@@ -1,0 +1,16 @@
+services:  
+  postgres:
+    image: postgres:17-alpine
+    command: ["postgres", "-c", "log_statement=all", "-c", "log_destination=stderr"]
+    container_name: db
+    environment:
+      - POSTGRES_USER=ndev
+      - POSTGRES_DB=urlshortener
+      - POSTGRES_HOST_AUTH_METHOD=trust # This means no password locally. In production, use safer methods like https://cloud.google.com/sql/docs/postgres/iam-authentication.
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ndev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"

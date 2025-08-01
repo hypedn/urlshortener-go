@@ -1,0 +1,20 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# IDE / Editor specific
+.idea/
+.vscode/
+*.iml
+
+# Local build artifacts
+urlshortener
+cmd/urlshortener-cli/urlshortener-cli
+
+# Documentation
+*.md

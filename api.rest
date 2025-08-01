@@ -1,0 +1,15 @@
+
+### Shorten URL
+# @name urlshortener
+POST http://localhost:8080/api/v1/shorten HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+
+{
+    "originalUrl": "https://google.com"
+}
+
+#### Variable Response
+@short_code = {{urlshortener.response.body.$.shortCode}}
+### Get long URL given a short code
+GET http://localhost:8080/api/v1/original/{{short_code}} HTTP/1.1

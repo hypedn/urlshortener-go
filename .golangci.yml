@@ -1,0 +1,26 @@
+version: "2"
+run:
+  tests: false
+  allow-parallel-runners: true
+issues:
+  exclude-dirs-use-default: true
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+  settings:
+    govet:
+      enable-all: true
+  exclusions:
+    paths:
+      - rpc/proto
+    generated: strict  # This excludes generated files based on Go's standard comments
+
+formatters:
+  exclusions:
+    paths:
+      - rpc/proto
