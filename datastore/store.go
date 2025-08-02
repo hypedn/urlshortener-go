@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ndajr/urlshortener-go/core"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
@@ -26,53 +27,68 @@ const (
 	maxRetries = 5
 	// dbConnectTimeout is the timeout for establishing a database connection.
 	dbConnectTimeout = 15 * time.Second
+	// cacheTTL is the time-to-live for cached URL entries.
+	cacheTTL = 1 * time.Hour
 )
 
 type Store struct {
-	db *pgxpool.Pool
+	db        *pgxpool.Pool
+	logger    *slog.Logger
+	cache     Cache
+	dbMetrics *DBMetrics
 }
 
 // NewStore establishes a database connection and returns a new Store.
-func NewStore(parentCtx context.Context, connStr string, logger *slog.Logger) (Store, error) {
-	ctx, cancel := context.WithTimeout(parentCtx, dbConnectTimeout)
+func NewStore(ctx context.Context, logger *slog.Logger, dbConnStr, redisConnStr string) (Store, error) {
+	ctx, cancel := context.WithTimeout(ctx, dbConnectTimeout)
 	defer cancel()
 
-	db, err := pgxpool.New(ctx, connStr)
+	db, err := pgxpool.New(ctx, dbConnStr)
 	if err != nil {
 		return Store{}, fmt.Errorf("store: failed to create connection pool: %w", err)
 	}
 
-	if err := checkDBConnection(ctx, db, logger); err != nil {
+	err = Ping(ctx, db, logger)
+	if err != nil {
 		return Store{}, err
 	}
 
-	err = runMigrations(connStr)
+	err = runMigrations(dbConnStr)
 	if err != nil {
 		return Store{}, fmt.Errorf("store: failed to run migrations: %w", err)
 	}
-	return Store{db: db}, nil
-}
+	logger.Info("successfully connected to db", "addr", dbConnStr)
 
-func checkDBConnection(ctx context.Context, db *pgxpool.Pool, logger *slog.Logger) (err error) {
-	ticker := time.NewTicker(time.Second * 1)
-	defer ticker.Stop()
-
-	// Loop until the context is cancelled or the ping is successful.
-	for {
-		err = db.Ping(ctx)
-		if err == nil {
-			break // Ping successful.
-		}
-
-		logger.Warn("unable to establish postgres db connection, retrying...", "error", err)
-
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("db connection timed out or was cancelled: %w (last error: %v)", ctx.Err(), err)
-		case <-ticker.C:
-		}
+	// Parse the DSN to get the database name for use as a Prometheus label.
+	config, err := pgxpool.ParseConfig(dbConnStr)
+	if err != nil {
+		db.Close()
+		return Store{}, fmt.Errorf("store: failed to parse db config for metrics: %w", err)
 	}
-	return nil
+	dbName := config.ConnConfig.Database
+
+	dbMetrics, err := NewDBMetrics(db, dbName)
+	if err != nil {
+		db.Close()
+		return Store{}, fmt.Errorf("store: failed to create db metrics: %w", err)
+	}
+
+	store := Store{
+		db:        db,
+		logger:    logger,
+		dbMetrics: dbMetrics,
+	}
+
+	if redisConnStr != "" {
+		cache, err := NewCache(ctx, redisConnStr, logger)
+		if err != nil {
+			db.Close() // clean up db connection on failure
+			return Store{}, fmt.Errorf("store: failed to connect to cache: %w", err)
+		}
+		store.cache = cache
+	}
+
+	return store, nil
 }
 
 func runMigrations(connStr string) (err error) {
@@ -106,31 +122,41 @@ func runMigrations(connStr string) (err error) {
 // AddURL generates a short code for a URL and stores it in the database.
 // It retries on collision.
 func (s Store) AddURL(ctx context.Context, longURL string) (core.URL, error) {
+	const queryName = "AddURL"
+
 	for i := 0; i < maxRetries; i++ {
 		shortCode, err := core.GenerateShortCode()
 		if err != nil {
 			return core.URL{}, fmt.Errorf("store: %w", err)
 		}
 
+		start := time.Now()
 		rows, err := s.db.Query(ctx, insertURL, pgx.NamedArgs{
 			"short_code": shortCode,
 			"long_url":   longURL,
 		})
 		if err != nil {
+			s.dbMetrics.QueryDuration.WithLabelValues(queryName).Observe(time.Since(start).Seconds())
+			s.dbMetrics.QueryTotal.WithLabelValues(queryName, StatusError).Inc()
 			return core.URL{}, fmt.Errorf("store: insertURL: %w", err)
 		}
 
 		out, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[core.URL])
+		s.dbMetrics.QueryDuration.WithLabelValues(queryName).Observe(time.Since(start).Seconds())
+
 		if err == nil {
+			s.dbMetrics.QueryTotal.WithLabelValues(queryName, StatusSuccess).Inc()
 			return out, nil
 		}
 
-		if !errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// pgx.ErrNoRows is expected on a key collision, so we log and retry.
+			s.dbMetrics.QueryTotal.WithLabelValues(queryName, StatusCollision).Inc()
+			s.logger.Info("collision detected, generating a new short code", "short_code", shortCode)
+		} else {
+			s.dbMetrics.QueryTotal.WithLabelValues(queryName, StatusError).Inc()
 			return core.URL{}, fmt.Errorf("store: failed to collect inserted row: %w", err)
 		}
-
-		// pgx.ErrNoRows is expected on a key collision, so we log and retry.
-		slog.Info("collision detected, generating a new short code", "short_code", shortCode)
 	}
 
 	return core.URL{}, fmt.Errorf("store: %w", ErrFailedToAddURL)
@@ -138,22 +164,60 @@ func (s Store) AddURL(ctx context.Context, longURL string) (core.URL, error) {
 
 // GetURL retrieves the original long URL for a given short code.
 func (s Store) GetURL(ctx context.Context, shortCode string) (string, error) {
+	// Check cache if the redis client is initialized.
+	if s.cache.rdb != nil {
+		longURL, err := s.cache.Get(ctx, shortCode)
+		if err == nil {
+			return longURL, nil // Cache hit
+		}
+		// If it's any error other than "not found", log it but proceed to DB.
+		if !errors.Is(err, redis.Nil) {
+			s.logger.Error("redis cache Get failed", "error", err)
+		}
+	}
+
+	const queryName = "GetURL"
+	start := time.Now()
+	defer func() {
+		s.dbMetrics.QueryDuration.WithLabelValues(queryName).Observe(time.Since(start).Seconds())
+	}()
+
 	rows, err := s.db.Query(ctx, getURL, shortCode)
 	if err != nil {
+		s.dbMetrics.QueryTotal.WithLabelValues(queryName, StatusError).Inc()
 		return "", fmt.Errorf("store: GetURL: %w", err)
 	}
 
 	longURL, err := pgx.CollectExactlyOneRow(rows, pgx.RowTo[string])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			// The query was successful but found no rows. This is not a DB error.
+			s.dbMetrics.QueryTotal.WithLabelValues(queryName, StatusSuccess).Inc()
 			return "", ErrURLNotFound
 		}
+		// Any other error from CollectExactlyOneRow is a DB error.
+		s.dbMetrics.QueryTotal.WithLabelValues(queryName, StatusError).Inc()
 		return "", fmt.Errorf("store: GetURL: %w", err)
+	}
+
+	// Success
+	s.dbMetrics.QueryTotal.WithLabelValues(queryName, StatusSuccess).Inc()
+
+	// After a successful DB lookup, store the result in the cache for future requests.
+	if s.cache.rdb != nil {
+		err := s.cache.Set(ctx, shortCode, longURL, cacheTTL)
+		if err != nil {
+			// Log the error but don't fail the whole operation, as the primary goal was met.
+			s.logger.Error("redis cache Set failed", "error", err)
+		}
 	}
 
 	return longURL, nil
 }
 
 func (s Store) Close() {
+	if s.cache.rdb != nil {
+		s.cache.Close()
+	}
 	s.db.Close()
 }

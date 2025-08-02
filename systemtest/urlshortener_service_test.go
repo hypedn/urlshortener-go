@@ -14,7 +14,7 @@ import (
 func TestURLShortenerService(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("e2e", func(t *testing.T) {
+	t.Run("ShortenAndGet", func(t *testing.T) {
 		originalURL := "https://github.com/ndajr/urlshortener-go"
 
 		shortenRes, err := client.ShortenURL(ctx, &proto.ShortenURLRequest{OriginalUrl: originalURL})
