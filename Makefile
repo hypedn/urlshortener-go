@@ -18,17 +18,17 @@ install.deps:
 	@go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
 	@go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 
-.PHONY: run.db
-run.db:
+.PHONY: run.dev
+run.dev:
 	@docker-compose up -d
-
-.PHONY: run.server
-run.server: run.db
-	@go run main.go
 
 .PHONY: run.cli
 run.cli:
 	@go run ./cmd/urlshortener/main.go
+
+.PHONY: run
+run: run.dev
+	@go run main.go
 
 .PHONY: test
 test:
