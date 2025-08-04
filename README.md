@@ -1,4 +1,4 @@
-# Go URL Shortener
+# URL Shortener
 
 A robust and scalable URL shortener service built with Go. This project is designed as an internal microservice, providing both gRPC and RESTful APIs for creating and managing short links.
 
@@ -18,7 +18,7 @@ A robust and scalable URL shortener service built with Go. This project is desig
 
 The project follows a standard Go project layout to separate concerns and improve maintainability.
 
--   `/cmd`: Entry points for the application binaries (`urlshortener` server, `urlshortener-cli`).
+-   `/cmd`: Entry point currently for the `urlshortener` CLI. The server currently runs from main.go, mainly due to the ease of embedding apidocs file.
 -   `/core`: Contains the core business logic and data structures of the application, such as the `URL` struct and the `GenerateShortCode` function in `core/core.go`. This package is designed to have no external dependencies on datastores or transport layers.
 -   `/datastore`: Handles all database and cache interactions. It provides an abstraction layer (`Store`) over Postgres and Redis.
 -   `/rpcserver`: Defines and implements the gRPC service.
