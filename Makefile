@@ -1,6 +1,6 @@
-.PHONY: api
+.PHONY: lint
 lint:
-	@golangci-lint run ./...
+	@golangci-lint run ./... --verbose
 	@buf lint
 
 .PHONY: generate
@@ -13,10 +13,11 @@ install.buf:
 
 .PHONY: install.deps
 install.deps:
-	@go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-	@go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
-	@go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
+	@go install tool
+
+.PHONY: install.cli
+install.cli:
+	CGO_ENABLED=0 go build -o $(GOPATH)/bin/urlshortener ./cmd/urlshortener-cli
 
 .PHONY: run.dev
 run.dev:

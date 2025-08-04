@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	proto "github.com/ndajr/urlshortener-go/rpc/proto/urlshortener/v1"
+	proto "github.com/ndajr/urlshortener-go/rpcserver/proto/urlshortener/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

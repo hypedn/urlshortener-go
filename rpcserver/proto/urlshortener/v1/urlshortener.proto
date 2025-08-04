@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package urlshortener.v1;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "github.com/ndajr/urlshortener-go/rpc/proto/v1";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "URL Shortener API";
+    version: "1.0.0";
+    description: "A simple API to shorten URLs.";
+  };
+  schemes: [HTTP, HTTPS];
+  consumes: "application/json";
+  produces: "application/json";
+};
+
+service URLShortenerService {
+  // Creates a short code for a given URL.
+  rpc ShortenURL(ShortenURLRequest) returns (ShortenURLResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/shorten"
+      body: "*"
+    };
+  }
+
+  // Retrieves the original URL for a given short code.
+  rpc GetOriginalURL(GetOriginalURLRequest) returns (GetOriginalURLResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/original/{short_code}"
+    };
+  }
+}
+
+message ShortenURLRequest {
+  // The original URL to shorten. Must be a valid, absolute URL.
+  string original_url = 1;
+}
+
+message ShortenURLResponse {
+  // The generated short code.
+  string short_code = 1;
+}
+
+message GetOriginalURLRequest {
+  // The short code to look up.
+  string short_code = 1;
+}
+
+message GetOriginalURLResponse {
+  // The original long URL.
+  string original_url = 1;
+}

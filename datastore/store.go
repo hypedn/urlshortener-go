@@ -162,10 +162,13 @@ func (s Store) AddURL(ctx context.Context, longURL string) (core.URL, error) {
 	return core.URL{}, fmt.Errorf("store: %w", ErrFailedToAddURL)
 }
 
+func (s Store) useCache() bool {
+	return s.cache.rdb != nil
+}
+
 // GetURL retrieves the original long URL for a given short code.
 func (s Store) GetURL(ctx context.Context, shortCode string) (string, error) {
-	// Check cache if the redis client is initialized.
-	if s.cache.rdb != nil {
+	if s.useCache() {
 		longURL, err := s.cache.Get(ctx, shortCode)
 		if err == nil {
 			return longURL, nil // Cache hit
@@ -204,7 +207,7 @@ func (s Store) GetURL(ctx context.Context, shortCode string) (string, error) {
 	s.dbMetrics.QueryTotal.WithLabelValues(queryName, StatusSuccess).Inc()
 
 	// After a successful DB lookup, store the result in the cache for future requests.
-	if s.cache.rdb != nil {
+	if s.useCache() {
 		err := s.cache.Set(ctx, shortCode, longURL, cacheTTL)
 		if err != nil {
 			// Log the error but don't fail the whole operation, as the primary goal was met.
@@ -216,7 +219,7 @@ func (s Store) GetURL(ctx context.Context, shortCode string) (string, error) {
 }
 
 func (s Store) Close() {
-	if s.cache.rdb != nil {
+	if s.useCache() {
 		s.cache.Close()
 	}
 	s.db.Close()

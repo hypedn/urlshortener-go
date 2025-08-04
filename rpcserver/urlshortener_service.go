@@ -1,4 +1,4 @@
-package rpc
+package rpcserver
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/ndajr/urlshortener-go/datastore"
-	proto "github.com/ndajr/urlshortener-go/rpc/proto/urlshortener/v1"
+	proto "github.com/ndajr/urlshortener-go/rpcserver/proto/urlshortener/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/ndajr/urlshortener-go/datastore"
-	"github.com/ndajr/urlshortener-go/rpc"
-	proto "github.com/ndajr/urlshortener-go/rpc/proto/urlshortener/v1"
+	"github.com/ndajr/urlshortener-go/rpcserver"
+	proto "github.com/ndajr/urlshortener-go/rpcserver/proto/urlshortener/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -34,16 +34,11 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	grpcServer := rpc.NewServer(db, logger)
-
-	go func() {
-		_, err := grpcServer.Run(ctx, grpcTestAddr)
-		if err != nil {
-			logger.Error("gRPC server failed during test", "error", err)
-			os.Exit(1)
-		}
-	}()
-	defer grpcServer.Stop()
+	grpcServer := rpcserver.NewServer(db, logger, grpcTestAddr)
+	if err := grpcServer.Run(ctx); err != nil {
+		logger.Error("gRPC server failed during test", "error", err)
+		os.Exit(1)
+	}
 
 	conn, err := grpc.NewClient(grpcTestAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	proto "github.com/ndajr/urlshortener-go/rpc/proto/urlshortener/v1"
+	proto "github.com/ndajr/urlshortener-go/rpcserver/proto/urlshortener/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"

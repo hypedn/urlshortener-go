@@ -7,6 +7,7 @@
 package v1
 
 import (
+	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -23,8 +24,9 @@ const (
 )
 
 type ShortenURLRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OriginalUrl   string                 `protobuf:"bytes,1,opt,name=original_url,json=originalUrl,proto3" json:"original_url,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The original URL to shorten. Must be a valid, absolute URL.
+	OriginalUrl   string `protobuf:"bytes,1,opt,name=original_url,json=originalUrl,proto3" json:"original_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -67,8 +69,9 @@ func (x *ShortenURLRequest) GetOriginalUrl() string {
 }
 
 type ShortenURLResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ShortCode     string                 `protobuf:"bytes,1,opt,name=short_code,json=shortCode,proto3" json:"short_code,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The generated short code.
+	ShortCode     string `protobuf:"bytes,1,opt,name=short_code,json=shortCode,proto3" json:"short_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -111,8 +114,9 @@ func (x *ShortenURLResponse) GetShortCode() string {
 }
 
 type GetOriginalURLRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ShortCode     string                 `protobuf:"bytes,1,opt,name=short_code,json=shortCode,proto3" json:"short_code,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The short code to look up.
+	ShortCode     string `protobuf:"bytes,1,opt,name=short_code,json=shortCode,proto3" json:"short_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -155,8 +159,9 @@ func (x *GetOriginalURLRequest) GetShortCode() string {
 }
 
 type GetOriginalURLResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OriginalUrl   string                 `protobuf:"bytes,1,opt,name=original_url,json=originalUrl,proto3" json:"original_url,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The original long URL.
+	OriginalUrl   string `protobuf:"bytes,1,opt,name=original_url,json=originalUrl,proto3" json:"original_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -202,7 +207,7 @@ var File_urlshortener_v1_urlshortener_proto protoreflect.FileDescriptor
 
 const file_urlshortener_v1_urlshortener_proto_rawDesc = "" +
 	"\n" +
-	"\"urlshortener/v1/urlshortener.proto\x12\x0furlshortener.v1\x1a\x1cgoogle/api/annotations.proto\"6\n" +
+	"\"urlshortener/v1/urlshortener.proto\x12\x0furlshortener.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"6\n" +
 	"\x11ShortenURLRequest\x12!\n" +
 	"\foriginal_url\x18\x01 \x01(\tR\voriginalUrl\"3\n" +
 	"\x12ShortenURLResponse\x12\x1d\n" +
@@ -216,7 +221,8 @@ const file_urlshortener_v1_urlshortener_proto_rawDesc = "" +
 	"\x13URLShortenerService\x12q\n" +
 	"\n" +
 	"ShortenURL\x12\".urlshortener.v1.ShortenURLRequest\x1a#.urlshortener.v1.ShortenURLResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/api/v1/shorten\x12\x88\x01\n" +
-	"\x0eGetOriginalURL\x12&.urlshortener.v1.GetOriginalURLRequest\x1a'.urlshortener.v1.GetOriginalURLResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/api/v1/original/{short_code}B/Z-github.com/ndajr/urlshortener-go/rpc/proto/v1b\x06proto3"
+	"\x0eGetOriginalURL\x12&.urlshortener.v1.GetOriginalURLRequest\x1a'.urlshortener.v1.GetOriginalURLResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/api/v1/original/{short_code}B\x95\x01\x92Ac\x129\n" +
+	"\x11URL Shortener API\x12\x1dA simple API to shorten URLs.2\x051.0.0*\x02\x01\x022\x10application/json:\x10application/jsonZ-github.com/ndajr/urlshortener-go/rpc/proto/v1b\x06proto3"
 
 var (
 	file_urlshortener_v1_urlshortener_proto_rawDescOnce sync.Once

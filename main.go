@@ -3,21 +3,18 @@ package main
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"flag"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/ndajr/urlshortener-go/datastore"
-	"github.com/ndajr/urlshortener-go/rpc"
-	swgui "github.com/swaggest/swgui/v5"
+	"github.com/ndajr/urlshortener-go/httpserver"
+	"github.com/ndajr/urlshortener-go/rpcserver"
 )
 
-const docsURL = "/docs"
+const docsURL = "/docs/"
 
 var (
 	httpServerEndpoint = flag.String("http-server-endpoint", "localhost:8080", "http server endpoint")
@@ -40,60 +37,23 @@ func main() {
 	db, err := datastore.NewStore(ctx, logger, *dbAddr, *redisAddr)
 	if err != nil {
 		logger.Error("failed to connect to datastore", "error", err)
-		shutdown()
+		return
 	}
 	defer db.Close()
 
-	logger.Info("starting urlshortener grpc service", "port", *grpcServerEndpoint)
-	srv := rpc.NewServer(db, logger)
-	gwmux, err := srv.Run(ctx, *grpcServerEndpoint)
-	if err != nil {
+	grpcSrv := rpcserver.NewServer(db, logger, *grpcServerEndpoint)
+	gwmux, err := grpcSrv.NewGatewayMux(ctx)
+	if err := grpcSrv.Run(ctx); err != nil {
 		logger.Error("failed to run gRPC server", "error", err)
-		shutdown()
-	}
-	defer srv.Stop()
-
-	mux := http.NewServeMux()
-	mux.Handle("/", gwmux)
-
-	mux.HandleFunc("/swagger.json", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, err := w.Write(swaggerJSON)
-		if err != nil {
-			logger.Error("failed to respond with swagger.json content", "error", err)
-		}
-	})
-	swaggerHandler := swgui.NewHandler("URL Shortener API", "/swagger.json", docsURL)
-	mux.Handle(docsURL, swaggerHandler)
-
-	httpSrv := &http.Server{
-		Addr:    *httpServerEndpoint,
-		Handler: mux,
+		return
 	}
 
-	startHTTPServer(httpSrv, logger, shutdown)
-	defer shutdownHTTPServer(httpSrv, logger)
+	httpSrv := httpserver.NewServer(gwmux, logger, *httpServerEndpoint, swaggerJSON)
+	if err := httpSrv.Run(ctx); err != nil {
+		logger.Error("failed to run HTTP server", "error", err)
+		return
+	}
 
 	<-ctx.Done()
 	logger.Info("powering down urlshortener service")
-}
-
-func startHTTPServer(srv *http.Server, logger *slog.Logger, shutdown context.CancelFunc) {
-	logger.Info("starting urlshortener http service", "port", srv.Addr)
-	go func() {
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("HTTP server failed", "error", err)
-			shutdown()
-		}
-	}()
-}
-
-func shutdownHTTPServer(srv *http.Server, logger *slog.Logger) {
-	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancelShutdown()
-
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.Error("failed to gracefully shutdown HTTP server", "error", err)
-		os.Exit(1)
-	}
 }

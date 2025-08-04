@@ -27,7 +27,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type URLShortenerServiceClient interface {
+	// Creates a short code for a given URL.
 	ShortenURL(ctx context.Context, in *ShortenURLRequest, opts ...grpc.CallOption) (*ShortenURLResponse, error)
+	// Retrieves the original URL for a given short code.
 	GetOriginalURL(ctx context.Context, in *GetOriginalURLRequest, opts ...grpc.CallOption) (*GetOriginalURLResponse, error)
 }
 
@@ -63,7 +65,9 @@ func (c *uRLShortenerServiceClient) GetOriginalURL(ctx context.Context, in *GetO
 // All implementations must embed UnimplementedURLShortenerServiceServer
 // for forward compatibility.
 type URLShortenerServiceServer interface {
+	// Creates a short code for a given URL.
 	ShortenURL(context.Context, *ShortenURLRequest) (*ShortenURLResponse, error)
+	// Retrieves the original URL for a given short code.
 	GetOriginalURL(context.Context, *GetOriginalURLRequest) (*GetOriginalURLResponse, error)
 	mustEmbedUnimplementedURLShortenerServiceServer()
 }

@@ -1,13 +1,18 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "urlshortener/v1/urlshortener.proto",
-    "version": "version not set"
+    "title": "URL Shortener API",
+    "description": "A simple API to shorten URLs.",
+    "version": "1.0.0"
   },
   "tags": [
     {
       "name": "URLShortenerService"
     }
+  ],
+  "schemes": [
+    "http",
+    "https"
   ],
   "consumes": [
     "application/json"
@@ -18,6 +23,7 @@
   "paths": {
     "/api/v1/original/{shortCode}": {
       "get": {
+        "summary": "Retrieves the original URL for a given short code.",
         "operationId": "URLShortenerService_GetOriginalURL",
         "responses": {
           "200": {
@@ -36,6 +42,7 @@
         "parameters": [
           {
             "name": "shortCode",
+            "description": "The short code to look up.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -48,6 +55,7 @@
     },
     "/api/v1/shorten": {
       "post": {
+        "summary": "Creates a short code for a given URL.",
         "operationId": "URLShortenerService_ShortenURL",
         "responses": {
           "200": {
@@ -112,7 +120,8 @@
       "type": "object",
       "properties": {
         "originalUrl": {
-          "type": "string"
+          "type": "string",
+          "description": "The original long URL."
         }
       }
     },
@@ -120,7 +129,8 @@
       "type": "object",
       "properties": {
         "originalUrl": {
-          "type": "string"
+          "type": "string",
+          "description": "The original URL to shorten. Must be a valid, absolute URL."
         }
       }
     },
@@ -128,7 +138,8 @@
       "type": "object",
       "properties": {
         "shortCode": {
-          "type": "string"
+          "type": "string",
+          "description": "The generated short code."
         }
       }
     }
