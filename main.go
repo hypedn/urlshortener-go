@@ -14,8 +14,6 @@ import (
 	"github.com/ndajr/urlshortener-go/rpcserver"
 )
 
-const docsURL = "/docs/"
-
 var (
 	httpServerEndpoint = flag.String("http-server-endpoint", "localhost:8080", "http server endpoint")
 	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:8081", "gRPC server endpoint")
