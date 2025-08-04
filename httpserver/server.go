@@ -16,33 +16,43 @@ import (
 const docsURL = "/docs/"
 
 type Server struct {
-	server   *http.Server
-	logger   *slog.Logger
-	endpoint string
+	server *http.Server
+	logger *slog.Logger
 }
 
 func NewServer(gwmux *runtime.ServeMux, logger *slog.Logger, httpAddress string, swaggerJSON []byte) *Server {
-	mux := http.NewServeMux()
-	mux.Handle("/api/", gwmux)
+	server := &http.Server{
+		Addr:    httpAddress,
+		Handler: registerEndpoints(gwmux, logger, swaggerJSON),
+	}
+	return &Server{server: server, logger: logger}
+}
 
+func registerEndpoints(gwmux *runtime.ServeMux, logger *slog.Logger, swaggerJSON []byte) *http.ServeMux {
+	mux := http.NewServeMux()
+
+	mux.Handle("/api/", gwmux)
 	mux.HandleFunc("/swagger.json", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, err := w.Write(swaggerJSON)
 		if err != nil {
 			logger.Error("failed to respond with swagger.json content", "error", err)
+			return
 		}
 	})
 	mux.Handle(docsURL, swaggerui.New("URL Shortener API", "/swagger.json", docsURL))
-	srv := &http.Server{
-		Handler: mux,
-	}
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.Redirect(w, r, docsURL, http.StatusFound)
+			return
+		}
+		http.NotFound(w, r)
+	})
 
-	return &Server{server: srv, logger: logger, endpoint: httpAddress}
+	return mux
 }
 
-func (s *Server) Run(ctx context.Context) error {
-	s.server.Addr = s.endpoint
-
+func (s Server) Run(ctx context.Context) error {
 	lis, err := net.Listen("tcp", s.server.Addr)
 	if err != nil {
 		return fmt.Errorf("failed to listen on %s: %w", s.server.Addr, err)
