@@ -145,7 +145,7 @@ The easiest way to run the entire stack (Go service, Postgres, Redis) is using t
 
     **Example: Create a short URL**
     ```sh
-    curl -X POST http://localhost:8080/v1/url \
+    curl -X POST http://localhost:8080/api/v1/shorten \
       -H "Content-Type: application/json" \
       -d '{"url": "https://github.com"}'
     ```
