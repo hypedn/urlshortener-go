@@ -7,12 +7,13 @@ lint:
 generate:
 	@buf generate
 
-.PHONY: install.buf
-install.buf:
-	@brew install bufbuild/buf/buf
-
 .PHONY: install.deps
 install.deps:
+	@brew install bufbuild/buf/buf
+	@brew install golangci-lint
+
+.PHONY: install.tools
+install.tools:
 	@go install tool
 
 .PHONY: install.cli

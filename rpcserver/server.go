@@ -22,11 +22,11 @@ type Server struct {
 	URLShorteningService URLShortenerService
 }
 
-func NewServer(db datastore.Store, logger *slog.Logger, grpcAddress string) *Server {
+func NewServer(db datastore.Store, logger *slog.Logger, grpcAddress string) Server {
 	grpcServer := grpc.NewServer()
 	grpc_prometheus.Register(grpcServer)
 
-	srv := &Server{
+	srv := Server{
 		logger:               logger,
 		grpcServer:           grpcServer,
 		endpoint:             grpcAddress,

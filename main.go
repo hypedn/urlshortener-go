@@ -46,7 +46,7 @@ func main() {
 		return
 	}
 
-	httpSrv := httpserver.NewServer(gwmux, logger, *httpServerEndpoint, swaggerJSON)
+	httpSrv := httpserver.NewServer(grpcSrv, gwmux, logger, *httpServerEndpoint, swaggerJSON)
 	if err := httpSrv.Run(ctx); err != nil {
 		logger.Error("failed to run HTTP server", "error", err)
 		return
