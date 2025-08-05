@@ -39,15 +39,16 @@ func main() {
 	}
 	defer db.Close()
 
-	grpcSrv := rpcserver.NewServer(db, logger, *grpcServerEndpoint)
-	gwmux, err := grpcSrv.NewGatewayMux(ctx)
-	if err := grpcSrv.Run(ctx); err != nil {
+	grpcSrv := rpcserver.NewServer(db, logger)
+	err = grpcSrv.Run(ctx, *grpcServerEndpoint)
+	if err != nil {
 		logger.Error("failed to run gRPC server", "error", err)
 		return
 	}
 
-	httpSrv := httpserver.NewServer(grpcSrv, gwmux, logger, *httpServerEndpoint, swaggerJSON)
-	if err := httpSrv.Run(ctx); err != nil {
+	gwmux := grpcSrv.NewGatewayMux()
+	httpSrv := httpserver.NewServer(grpcSrv, gwmux, logger, swaggerJSON)
+	if err := httpSrv.Run(ctx, *httpServerEndpoint); err != nil {
 		logger.Error("failed to run HTTP server", "error", err)
 		return
 	}

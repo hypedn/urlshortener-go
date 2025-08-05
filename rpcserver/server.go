@@ -17,19 +17,18 @@ import (
 type Server struct {
 	logger     *slog.Logger
 	grpcServer *grpc.Server
-	endpoint   string
+	gwmux      *runtime.ServeMux
 
 	URLShorteningService URLShortenerService
 }
 
-func NewServer(db datastore.Store, logger *slog.Logger, grpcAddress string) Server {
+func NewServer(db datastore.Store, logger *slog.Logger) Server {
 	grpcServer := grpc.NewServer()
 	grpc_prometheus.Register(grpcServer)
 
 	srv := Server{
 		logger:               logger,
 		grpcServer:           grpcServer,
-		endpoint:             grpcAddress,
 		URLShorteningService: NewURLShortenerService(db, logger),
 	}
 
@@ -41,34 +40,40 @@ func (s *Server) registerServices(srv *grpc.Server) {
 	proto.RegisterURLShortenerServiceServer(srv, s.URLShorteningService)
 }
 
-func (s *Server) Run(ctx context.Context) error {
-	lis, err := net.Listen("tcp", s.endpoint)
+func (s *Server) Run(ctx context.Context, address string) error {
+	conn, err := net.Listen("tcp", address)
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		s.logger.Info("starting urlshortener gRPC service", "addr", s.endpoint)
-		if err := s.grpcServer.Serve(lis); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+		s.logger.Info("starting urlshortener gRPC service", "addr", address)
+		err = s.grpcServer.Serve(conn)
+		if err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 			s.logger.Error("gRPC server failed to serve", "error", err)
 		}
 	}()
+
+	gwmux := runtime.NewServeMux(runtime.WithErrorHandler(CustomHTTPErrorHandler))
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	err = proto.RegisterURLShortenerServiceHandlerFromEndpoint(ctx, gwmux, address, opts)
+	if err != nil {
+		return err
+	}
+	s.gwmux = gwmux
 
 	go func() {
 		<-ctx.Done()
 		s.logger.Info("gRPC server shutting down")
 		s.grpcServer.GracefulStop()
+		if err := conn.Close(); err != nil {
+			s.logger.Error("gRPC server graceful shutdown failed", "error", err)
+		}
 	}()
 
 	return nil
 }
 
-func (s *Server) NewGatewayMux(ctx context.Context) (*runtime.ServeMux, error) {
-	gwmux := runtime.NewServeMux(runtime.WithErrorHandler(CustomHTTPErrorHandler))
-	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	err := proto.RegisterURLShortenerServiceHandlerFromEndpoint(ctx, gwmux, s.endpoint, opts)
-	if err != nil {
-		return nil, err
-	}
-	return gwmux, nil
+func (s *Server) NewGatewayMux() *runtime.ServeMux {
+	return s.gwmux
 }

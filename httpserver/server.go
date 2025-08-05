@@ -22,16 +22,14 @@ type Server struct {
 	logger     *slog.Logger
 }
 
-func NewServer(server rpcserver.Server, gwmux *runtime.ServeMux, logger *slog.Logger, httpAddress string, swaggerJSON []byte) *Server {
+func NewServer(server rpcserver.Server, gwmux *runtime.ServeMux, logger *slog.Logger, swaggerJSON []byte) *Server {
 	s := &Server{
 		server: server,
 		logger: logger,
 	}
-	httpSrv := &http.Server{
-		Addr:    httpAddress,
+	s.httpServer = &http.Server{
 		Handler: s.registerEndpoints(gwmux, swaggerJSON),
 	}
-	s.httpServer = httpSrv
 	return s
 }
 
@@ -53,14 +51,14 @@ func (s *Server) registerEndpoints(gwmux *runtime.ServeMux, swaggerJSON []byte) 
 	return mux
 }
 
-func (s Server) Run(ctx context.Context) error {
-	lis, err := net.Listen("tcp", s.httpServer.Addr)
+func (s Server) Run(ctx context.Context, address string) error {
+	lis, err := net.Listen("tcp", address)
 	if err != nil {
-		return fmt.Errorf("failed to listen on %s: %w", s.httpServer.Addr, err)
+		return fmt.Errorf("failed to listen on %s: %w", address, err)
 	}
 
 	go func() {
-		s.logger.Info("starting urlshortener http service", "addr", s.httpServer.Addr)
+		s.logger.Info("starting urlshortener http service", "addr", address)
 		if err := s.httpServer.Serve(lis); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			s.logger.Error("http server failed to serve", "error", err)
 		}

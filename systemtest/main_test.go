@@ -34,8 +34,8 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	grpcServer := rpcserver.NewServer(db, logger, grpcTestAddr)
-	if err := grpcServer.Run(ctx); err != nil {
+	grpcServer := rpcserver.NewServer(db, logger)
+	if err := grpcServer.Run(ctx, grpcTestAddr); err != nil {
 		logger.Error("gRPC server failed during test", "error", err)
 		os.Exit(1)
 	}
