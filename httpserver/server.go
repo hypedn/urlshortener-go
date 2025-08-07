@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -51,7 +52,7 @@ func (s *Server) registerEndpoints(gwmux *runtime.ServeMux, swaggerJSON []byte) 
 	return mux
 }
 
-func (s Server) Run(ctx context.Context, address string) error {
+func (s Server) Run(ctx context.Context, address string, wg *sync.WaitGroup) error {
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		return fmt.Errorf("failed to listen on %s: %w", address, err)
@@ -64,7 +65,9 @@ func (s Server) Run(ctx context.Context, address string) error {
 		}
 	}()
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		<-ctx.Done()
 		s.logger.Info("http server shutting down")
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

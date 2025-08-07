@@ -48,14 +48,13 @@ func NewStore(ctx context.Context, logger *slog.Logger, dbConnStr, redisConnStr 
 		return Store{}, fmt.Errorf("store: failed to create connection pool: %w", err)
 	}
 
-	err = Ping(ctx, db, logger)
-	if err != nil {
-		return Store{}, err
+	if pingErr := Ping(ctx, db, logger); pingErr != nil {
+		return Store{}, pingErr
 	}
 
-	err = runMigrations(dbConnStr)
-	if err != nil {
-		return Store{}, fmt.Errorf("store: failed to run migrations: %w", err)
+	if migrErr := runMigrations(dbConnStr); migrErr != nil {
+		db.Close()
+		return Store{}, fmt.Errorf("store: failed to run migrations: %w", migrErr)
 	}
 	logger.Info("successfully connected to db", "addr", dbConnStr)
 
@@ -112,9 +111,8 @@ func runMigrations(connStr string) (err error) {
 	if err != nil {
 		return fmt.Errorf("store: failed to create migrate instance: %w", err)
 	}
-	err = m.Up()
-	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		return fmt.Errorf("store: failed to run migrations: %w", err)
+	if runErr := m.Up(); runErr != nil && !errors.Is(runErr, migrate.ErrNoChange) {
+		return fmt.Errorf("store: failed to run migrations: %w", runErr)
 	}
 	return nil
 }

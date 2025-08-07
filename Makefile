@@ -30,7 +30,8 @@ run.cli:
 
 .PHONY: run
 run: run.dev
-	@go run main.go
+	@go build -o /tmp/urlshortener main.go
+	@/tmp/urlshortener
 
 .PHONY: test
 test:

@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/ndajr/urlshortener-go/datastore"
@@ -35,24 +36,26 @@ func main() {
 	db, err := datastore.NewStore(ctx, logger, *dbAddr, *redisAddr)
 	if err != nil {
 		logger.Error("failed to connect to datastore", "error", err)
-		return
+		os.Exit(1)
 	}
 	defer db.Close()
 
+	var wg sync.WaitGroup
+
 	grpcSrv := rpcserver.NewServer(db, logger)
-	err = grpcSrv.Run(ctx, *grpcServerEndpoint)
-	if err != nil {
-		logger.Error("failed to run gRPC server", "error", err)
-		return
+	if runErr := grpcSrv.Run(ctx, *grpcServerEndpoint, &wg); runErr != nil {
+		logger.Error("failed to run gRPC server", "error", runErr)
+		os.Exit(1)
 	}
 
 	gwmux := grpcSrv.NewGatewayMux()
 	httpSrv := httpserver.NewServer(grpcSrv, gwmux, logger, swaggerJSON)
-	if err := httpSrv.Run(ctx, *httpServerEndpoint); err != nil {
-		logger.Error("failed to run HTTP server", "error", err)
-		return
+	if runErr := httpSrv.Run(ctx, *httpServerEndpoint, &wg); runErr != nil {
+		logger.Error("failed to run HTTP server", "error", runErr)
+		os.Exit(1)
 	}
 
 	<-ctx.Done()
 	logger.Info("powering down urlshortener service")
+	wg.Wait()
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/ndajr/urlshortener-go/datastore"
@@ -35,7 +36,8 @@ func TestMain(m *testing.M) {
 	}
 
 	grpcServer := rpcserver.NewServer(db, logger)
-	if err := grpcServer.Run(ctx, grpcTestAddr); err != nil {
+	var wg sync.WaitGroup
+	if err := grpcServer.Run(ctx, grpcTestAddr, &wg); err != nil {
 		logger.Error("gRPC server failed during test", "error", err)
 		os.Exit(1)
 	}
