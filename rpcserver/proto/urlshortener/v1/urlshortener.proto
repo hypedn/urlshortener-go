@@ -5,7 +5,7 @@ package urlshortener.v1;
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
-option go_package = "github.com/ndajr/urlshortener-go/rpc/proto/v1";
+option go_package = "github.com/ndajr/urlshortener-go/rpcserver/proto/urlshortener/v1";
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
@@ -33,6 +33,50 @@ service URLShortenerService {
       get: "/api/v1/original/{short_code}"
     };
   }
+
+  // Redirects a short code to its original URL.
+  // This RPC is defined for OpenAPI documentation purposes. The actual
+  // redirection is handled by a custom HTTP handler at the root path.
+  rpc Redirect(RedirectRequest) returns (RedirectResponse) {
+    option (google.api.http) = {
+      get: "/{short_code}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Redirects a short URL to the original URL";
+      description: "Given a short code, this endpoint performs an HTTP 302 redirect to the corresponding original URL.\n\n**Note for Swagger UI users:** Due to browser security restrictions, clicking 'Execute' will not perform a real redirect. Instead, it will return a `200 OK` response with the destination URL in the `Location` header, allowing you to see what the redirect target would be.";
+      tags: "Redirect";
+      responses: {
+        key: "200";
+        value: {
+          description: "OK. The original URL is returned in the 'Location' header.";
+          headers: {
+            key: "Location";
+            value: {
+              description: "The original URL to redirect to.";
+              type: "string";
+            }
+          }
+        }
+      }
+      responses: {
+        key: "302";
+        value: {
+          description: "Found. Redirects to the original URL.";
+          headers: {
+            key: "Location";
+            value: {
+              description: "The original URL to redirect to.";
+              type: "string";
+            }
+          }
+        }
+      }
+      responses: {
+        key: "404";
+        value: { description: "Not Found. The short code does not exist."; }
+      }
+    };
+  }
 }
 
 message ShortenURLRequest {
@@ -54,3 +98,10 @@ message GetOriginalURLResponse {
   // The original long URL.
   string original_url = 1;
 }
+
+message RedirectRequest {
+  // The short code to redirect to the original URL.
+  string short_code = 1;
+}
+
+message RedirectResponse {}

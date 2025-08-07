@@ -23,8 +23,6 @@ func (s *Server) redirectHandler() http.HandlerFunc {
 			return
 		}
 
-		// Call the gRPC service to get the long URL. This keeps the HTTP layer
-		// decoupled from the data layer, using the gRPC API as the boundary.
 		resp, err := s.server.URLShorteningService.GetOriginalURL(r.Context(), &proto.GetOriginalURLRequest{ShortCode: shortCode})
 		if err != nil {
 			if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
@@ -37,7 +35,14 @@ func (s *Server) redirectHandler() http.HandlerFunc {
 			return
 		}
 
-		// Issue a 302 Found redirect.
+		w.Header().Set("Location", resp.GetOriginalUrl())
+
+		// Return 200 OK for Swagger UI, otherwise, return 302 Found redirect.
+		if strings.HasSuffix(r.Header.Get("Referer"), docsURL) {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
 		http.Redirect(w, r, resp.GetOriginalUrl(), http.StatusFound)
 	}
 }
