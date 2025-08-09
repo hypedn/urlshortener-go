@@ -13,6 +13,9 @@ type URL struct {
 	LongURL   string    `db:"long_url" json:"long_url"`
 }
 
+// MaxURLLenght is the maximum allowed length used by Shorten operation.
+const MaxURLLength = 2083
+
 const (
 	// base62Chars are the characters used for generating short codes.
 	base62Chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

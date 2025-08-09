@@ -2,17 +2,17 @@
 version: v2
 plugins:
   - local: protoc-gen-go
-    out: rpcserver/proto
+    out: .
     opt:
       - paths=source_relative
 
   - local: protoc-gen-go-grpc
-    out: rpcserver/proto
+    out: .
     opt:
       - paths=source_relative
 
   - local: protoc-gen-grpc-gateway
-    out: rpcserver/proto
+    out: .
     opt:
       - paths=source_relative
       - generate_unbound_methods=true

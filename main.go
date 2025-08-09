@@ -10,9 +10,10 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/ndajr/urlshortener-go/datastore"
-	"github.com/ndajr/urlshortener-go/httpserver"
-	"github.com/ndajr/urlshortener-go/rpcserver"
+	"github.com/ndajr/urlshortener-go/internal/cachestore"
+	"github.com/ndajr/urlshortener-go/internal/datastore"
+	"github.com/ndajr/urlshortener-go/internal/httpserver"
+	"github.com/ndajr/urlshortener-go/internal/rpcserver"
 )
 
 var (
@@ -33,16 +34,23 @@ func main() {
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	db, err := datastore.NewStore(ctx, logger, *dbAddr, *redisAddr)
+	db, err := datastore.NewStore(ctx, logger, *dbAddr)
 	if err != nil {
 		logger.Error("failed to connect to datastore", "error", err)
 		os.Exit(1)
 	}
 	defer db.Close()
 
+	cache, err := cachestore.NewCache(ctx, *redisAddr, logger)
+	if err != nil {
+		logger.Error("failed to connect to cache", "error", err)
+		os.Exit(1)
+	}
+	defer cache.Close()
+
 	var wg sync.WaitGroup
 
-	grpcSrv := rpcserver.NewServer(db, logger)
+	grpcSrv := rpcserver.NewServer(logger, db, cache)
 	if runErr := grpcSrv.Run(ctx, *grpcServerEndpoint, &wg); runErr != nil {
 		logger.Error("failed to run gRPC server", "error", runErr)
 		os.Exit(1)

@@ -7,9 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/ndajr/urlshortener-go/datastore"
-	"github.com/ndajr/urlshortener-go/rpcserver"
-	proto "github.com/ndajr/urlshortener-go/rpcserver/proto/urlshortener/v1"
+	"github.com/ndajr/urlshortener-go/internal/datastore"
+	"github.com/ndajr/urlshortener-go/internal/rpcserver"
+	proto "github.com/ndajr/urlshortener-go/proto/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -20,6 +20,7 @@ var (
 
 const (
 	dbAddr       = "postgres://ndev@localhost:5432/urlshortener?sslmode=disable"
+	redisAddr    = "localhost:6379"
 	grpcTestAddr = "localhost:50051"
 )
 
@@ -29,13 +30,13 @@ func TestMain(m *testing.M) {
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	db, err := datastore.NewStore(ctx, logger, dbAddr, "")
+	db, err := datastore.NewStore(ctx, logger, dbAddr)
 	if err != nil {
 		logger.Error("datastore was unable to start", "error", err)
 		os.Exit(1)
 	}
 
-	grpcServer := rpcserver.NewServer(db, logger)
+	grpcServer := rpcserver.NewServer(logger, db, nil)
 	var wg sync.WaitGroup
 	if err := grpcServer.Run(ctx, grpcTestAddr, &wg); err != nil {
 		logger.Error("gRPC server failed during test", "error", err)

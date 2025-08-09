@@ -13,8 +13,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/ndajr/urlshortener-go/core"
-	"github.com/redis/go-redis/v9"
+	"github.com/ndajr/urlshortener-go/internal/core"
 )
 
 var (
@@ -27,19 +26,16 @@ const (
 	maxRetries = 5
 	// dbConnectTimeout is the timeout for establishing a database connection.
 	dbConnectTimeout = 15 * time.Second
-	// cacheTTL is the time-to-live for cached URL entries.
-	cacheTTL = 1 * time.Hour
 )
 
 type Store struct {
 	db        *pgxpool.Pool
 	logger    *slog.Logger
-	cache     Cache
-	dbMetrics *DBMetrics
+	dbMetrics Metrics
 }
 
 // NewStore establishes a database connection and returns a new Store.
-func NewStore(ctx context.Context, logger *slog.Logger, dbConnStr, redisConnStr string) (Store, error) {
+func NewStore(ctx context.Context, logger *slog.Logger, dbConnStr string) (Store, error) {
 	ctx, cancel := context.WithTimeout(ctx, dbConnectTimeout)
 	defer cancel()
 
@@ -48,7 +44,7 @@ func NewStore(ctx context.Context, logger *slog.Logger, dbConnStr, redisConnStr 
 		return Store{}, fmt.Errorf("store: failed to create connection pool: %w", err)
 	}
 
-	if pingErr := Ping(ctx, db, logger); pingErr != nil {
+	if pingErr := ping(ctx, db, logger); pingErr != nil {
 		return Store{}, pingErr
 	}
 
@@ -66,28 +62,35 @@ func NewStore(ctx context.Context, logger *slog.Logger, dbConnStr, redisConnStr 
 	}
 	dbName := config.ConnConfig.Database
 
-	dbMetrics, err := NewDBMetrics(db, dbName)
-	if err != nil {
-		db.Close()
-		return Store{}, fmt.Errorf("store: failed to create db metrics: %w", err)
-	}
-
 	store := Store{
 		db:        db,
 		logger:    logger,
-		dbMetrics: dbMetrics,
-	}
-
-	if redisConnStr != "" {
-		cache, err := NewCache(ctx, redisConnStr, logger)
-		if err != nil {
-			db.Close() // clean up db connection on failure
-			return Store{}, fmt.Errorf("store: failed to connect to cache: %w", err)
-		}
-		store.cache = cache
+		dbMetrics: NewMetrics(db, dbName),
 	}
 
 	return store, nil
+}
+
+func ping(ctx context.Context, db *pgxpool.Pool, logger *slog.Logger) (err error) {
+	ticker := time.NewTicker(time.Second * 1)
+	defer ticker.Stop()
+
+	// Loop until the context is cancelled or the ping is successful.
+	for {
+		err = db.Ping(ctx)
+		if err == nil {
+			break // Ping successful.
+		}
+
+		logger.Warn("unable to establish connection, retrying...", "error", err)
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("db connection timed out or was cancelled: %w (last error: %v)", ctx.Err(), err)
+		case <-ticker.C:
+		}
+	}
+	return nil
 }
 
 func runMigrations(connStr string) (err error) {
@@ -160,23 +163,8 @@ func (s Store) AddURL(ctx context.Context, longURL string) (core.URL, error) {
 	return core.URL{}, fmt.Errorf("store: %w", ErrFailedToAddURL)
 }
 
-func (s Store) useCache() bool {
-	return s.cache.rdb != nil
-}
-
 // GetURL retrieves the original long URL for a given short code.
 func (s Store) GetURL(ctx context.Context, shortCode string) (string, error) {
-	if s.useCache() {
-		longURL, err := s.cache.Get(ctx, shortCode)
-		if err == nil {
-			return longURL, nil // Cache hit
-		}
-		// If it's any error other than "not found", log it but proceed to DB.
-		if !errors.Is(err, redis.Nil) {
-			s.logger.Error("redis cache Get failed", "error", err)
-		}
-	}
-
 	const queryName = "GetURL"
 	start := time.Now()
 	defer func() {
@@ -204,21 +192,9 @@ func (s Store) GetURL(ctx context.Context, shortCode string) (string, error) {
 	// Success
 	s.dbMetrics.QueryTotal.WithLabelValues(queryName, StatusSuccess).Inc()
 
-	// After a successful DB lookup, store the result in the cache for future requests.
-	if s.useCache() {
-		err := s.cache.Set(ctx, shortCode, longURL, cacheTTL)
-		if err != nil {
-			// Log the error but don't fail the whole operation, as the primary goal was met.
-			s.logger.Error("redis cache Set failed", "error", err)
-		}
-	}
-
 	return longURL, nil
 }
 
 func (s Store) Close() {
-	if s.useCache() {
-		s.cache.Close()
-	}
 	s.db.Close()
 }

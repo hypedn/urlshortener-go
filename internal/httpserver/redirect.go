@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	proto "github.com/ndajr/urlshortener-go/rpcserver/proto/urlshortener/v1"
+	proto "github.com/ndajr/urlshortener-go/proto/v1"
 )
 
 func (s *Server) redirectHandler() http.HandlerFunc {

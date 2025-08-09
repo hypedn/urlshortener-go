@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/ndajr/urlshortener-go/rpcserver"
+	"github.com/ndajr/urlshortener-go/internal/rpcserver"
 	swaggerui "github.com/swaggest/swgui/v5emb"
 )
 

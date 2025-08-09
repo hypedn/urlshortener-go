@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        (unknown)
-// source: urlshortener/v1/urlshortener.proto
+// source: proto/v1/urlshortener.proto
 
 package v1
 
@@ -33,7 +33,7 @@ type ShortenURLRequest struct {
 
 func (x *ShortenURLRequest) Reset() {
 	*x = ShortenURLRequest{}
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[0]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +45,7 @@ func (x *ShortenURLRequest) String() string {
 func (*ShortenURLRequest) ProtoMessage() {}
 
 func (x *ShortenURLRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[0]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +58,7 @@ func (x *ShortenURLRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShortenURLRequest.ProtoReflect.Descriptor instead.
 func (*ShortenURLRequest) Descriptor() ([]byte, []int) {
-	return file_urlshortener_v1_urlshortener_proto_rawDescGZIP(), []int{0}
+	return file_proto_v1_urlshortener_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ShortenURLRequest) GetOriginalUrl() string {
@@ -78,7 +78,7 @@ type ShortenURLResponse struct {
 
 func (x *ShortenURLResponse) Reset() {
 	*x = ShortenURLResponse{}
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[1]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -90,7 +90,7 @@ func (x *ShortenURLResponse) String() string {
 func (*ShortenURLResponse) ProtoMessage() {}
 
 func (x *ShortenURLResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[1]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -103,7 +103,7 @@ func (x *ShortenURLResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShortenURLResponse.ProtoReflect.Descriptor instead.
 func (*ShortenURLResponse) Descriptor() ([]byte, []int) {
-	return file_urlshortener_v1_urlshortener_proto_rawDescGZIP(), []int{1}
+	return file_proto_v1_urlshortener_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ShortenURLResponse) GetShortCode() string {
@@ -123,7 +123,7 @@ type GetOriginalURLRequest struct {
 
 func (x *GetOriginalURLRequest) Reset() {
 	*x = GetOriginalURLRequest{}
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[2]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -135,7 +135,7 @@ func (x *GetOriginalURLRequest) String() string {
 func (*GetOriginalURLRequest) ProtoMessage() {}
 
 func (x *GetOriginalURLRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[2]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -148,7 +148,7 @@ func (x *GetOriginalURLRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOriginalURLRequest.ProtoReflect.Descriptor instead.
 func (*GetOriginalURLRequest) Descriptor() ([]byte, []int) {
-	return file_urlshortener_v1_urlshortener_proto_rawDescGZIP(), []int{2}
+	return file_proto_v1_urlshortener_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetOriginalURLRequest) GetShortCode() string {
@@ -168,7 +168,7 @@ type GetOriginalURLResponse struct {
 
 func (x *GetOriginalURLResponse) Reset() {
 	*x = GetOriginalURLResponse{}
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[3]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -180,7 +180,7 @@ func (x *GetOriginalURLResponse) String() string {
 func (*GetOriginalURLResponse) ProtoMessage() {}
 
 func (x *GetOriginalURLResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[3]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -193,7 +193,7 @@ func (x *GetOriginalURLResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOriginalURLResponse.ProtoReflect.Descriptor instead.
 func (*GetOriginalURLResponse) Descriptor() ([]byte, []int) {
-	return file_urlshortener_v1_urlshortener_proto_rawDescGZIP(), []int{3}
+	return file_proto_v1_urlshortener_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetOriginalURLResponse) GetOriginalUrl() string {
@@ -213,7 +213,7 @@ type RedirectRequest struct {
 
 func (x *RedirectRequest) Reset() {
 	*x = RedirectRequest{}
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[4]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -225,7 +225,7 @@ func (x *RedirectRequest) String() string {
 func (*RedirectRequest) ProtoMessage() {}
 
 func (x *RedirectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[4]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -238,7 +238,7 @@ func (x *RedirectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RedirectRequest.ProtoReflect.Descriptor instead.
 func (*RedirectRequest) Descriptor() ([]byte, []int) {
-	return file_urlshortener_v1_urlshortener_proto_rawDescGZIP(), []int{4}
+	return file_proto_v1_urlshortener_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RedirectRequest) GetShortCode() string {
@@ -256,7 +256,7 @@ type RedirectResponse struct {
 
 func (x *RedirectResponse) Reset() {
 	*x = RedirectResponse{}
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[5]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -268,7 +268,7 @@ func (x *RedirectResponse) String() string {
 func (*RedirectResponse) ProtoMessage() {}
 
 func (x *RedirectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urlshortener_v1_urlshortener_proto_msgTypes[5]
+	mi := &file_proto_v1_urlshortener_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -281,14 +281,14 @@ func (x *RedirectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RedirectResponse.ProtoReflect.Descriptor instead.
 func (*RedirectResponse) Descriptor() ([]byte, []int) {
-	return file_urlshortener_v1_urlshortener_proto_rawDescGZIP(), []int{5}
+	return file_proto_v1_urlshortener_proto_rawDescGZIP(), []int{5}
 }
 
-var File_urlshortener_v1_urlshortener_proto protoreflect.FileDescriptor
+var File_proto_v1_urlshortener_proto protoreflect.FileDescriptor
 
-const file_urlshortener_v1_urlshortener_proto_rawDesc = "" +
+const file_proto_v1_urlshortener_proto_rawDesc = "" +
 	"\n" +
-	"\"urlshortener/v1/urlshortener.proto\x12\x0furlshortener.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"6\n" +
+	"\x1bproto/v1/urlshortener.proto\x12\bproto.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"6\n" +
 	"\x11ShortenURLRequest\x12!\n" +
 	"\foriginal_url\x18\x01 \x01(\tR\voriginalUrl\"3\n" +
 	"\x12ShortenURLResponse\x12\x1d\n" +
@@ -302,12 +302,12 @@ const file_urlshortener_v1_urlshortener_proto_rawDesc = "" +
 	"\x0fRedirectRequest\x12\x1d\n" +
 	"\n" +
 	"short_code\x18\x01 \x01(\tR\tshortCode\"\x12\n" +
-	"\x10RedirectResponse2\xc5\b\n" +
-	"\x13URLShortenerService\x12q\n" +
+	"\x10RedirectResponse2\x9a\b\n" +
+	"\x13URLShortenerService\x12c\n" +
 	"\n" +
-	"ShortenURL\x12\".urlshortener.v1.ShortenURLRequest\x1a#.urlshortener.v1.ShortenURLResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/api/v1/shorten\x12\x88\x01\n" +
-	"\x0eGetOriginalURL\x12&.urlshortener.v1.GetOriginalURLRequest\x1a'.urlshortener.v1.GetOriginalURLResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/api/v1/original/{short_code}\x12\xaf\x06\n" +
-	"\bRedirect\x12 .urlshortener.v1.RedirectRequest\x1a!.urlshortener.v1.RedirectResponse\"\xdd\x05\x92A\xc4\x05\n" +
+	"ShortenURL\x12\x1b.proto.v1.ShortenURLRequest\x1a\x1c.proto.v1.ShortenURLResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/api/v1/shorten\x12z\n" +
+	"\x0eGetOriginalURL\x12\x1f.proto.v1.GetOriginalURLRequest\x1a .proto.v1.GetOriginalURLResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/api/v1/original/{short_code}\x12\xa1\x06\n" +
+	"\bRedirect\x12\x19.proto.v1.RedirectRequest\x1a\x1a.proto.v1.RedirectResponse\"\xdd\x05\x92A\xc4\x05\n" +
 	"\bRedirect\x12)Redirects a short URL to the original URL\x1a\xf3\x02Given a short code, this endpoint performs an HTTP 302 redirect to the corresponding original URL.\n" +
 	"\n" +
 	"**Note for Swagger UI users:** Due to browser security restrictions, clicking 'Execute' will not perform a real redirect. Instead, it will return a `200 OK` response with the destination URL in the `Location` header, allowing you to see what the redirect target would be.J{\n" +
@@ -320,37 +320,37 @@ const file_urlshortener_v1_urlshortener_proto_rawDesc = "" +
 	"\bLocation\x12*\n" +
 	" The original URL to redirect to.\x12\x06stringJ2\n" +
 	"\x03404\x12+\n" +
-	")Not Found. The short code does not exist.\x82\xd3\xe4\x93\x02\x0f\x12\r/{short_code}B\xa8\x01\x92Ac\x129\n" +
-	"\x11URL Shortener API\x12\x1dA simple API to shorten URLs.2\x051.0.0*\x02\x01\x022\x10application/json:\x10application/jsonZ@github.com/ndajr/urlshortener-go/rpcserver/proto/urlshortener/v1b\x06proto3"
+	")Not Found. The short code does not exist.\x82\xd3\xe4\x93\x02\x0f\x12\r/{short_code}B\x91\x01\x92Ac\x129\n" +
+	"\x11URL Shortener API\x12\x1dA simple API to shorten URLs.2\x051.0.0*\x02\x01\x022\x10application/json:\x10application/jsonZ)github.com/ndajr/urlshortener-go/proto/v1b\x06proto3"
 
 var (
-	file_urlshortener_v1_urlshortener_proto_rawDescOnce sync.Once
-	file_urlshortener_v1_urlshortener_proto_rawDescData []byte
+	file_proto_v1_urlshortener_proto_rawDescOnce sync.Once
+	file_proto_v1_urlshortener_proto_rawDescData []byte
 )
 
-func file_urlshortener_v1_urlshortener_proto_rawDescGZIP() []byte {
-	file_urlshortener_v1_urlshortener_proto_rawDescOnce.Do(func() {
-		file_urlshortener_v1_urlshortener_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_urlshortener_v1_urlshortener_proto_rawDesc), len(file_urlshortener_v1_urlshortener_proto_rawDesc)))
+func file_proto_v1_urlshortener_proto_rawDescGZIP() []byte {
+	file_proto_v1_urlshortener_proto_rawDescOnce.Do(func() {
+		file_proto_v1_urlshortener_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_v1_urlshortener_proto_rawDesc), len(file_proto_v1_urlshortener_proto_rawDesc)))
 	})
-	return file_urlshortener_v1_urlshortener_proto_rawDescData
+	return file_proto_v1_urlshortener_proto_rawDescData
 }
 
-var file_urlshortener_v1_urlshortener_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_urlshortener_v1_urlshortener_proto_goTypes = []any{
-	(*ShortenURLRequest)(nil),      // 0: urlshortener.v1.ShortenURLRequest
-	(*ShortenURLResponse)(nil),     // 1: urlshortener.v1.ShortenURLResponse
-	(*GetOriginalURLRequest)(nil),  // 2: urlshortener.v1.GetOriginalURLRequest
-	(*GetOriginalURLResponse)(nil), // 3: urlshortener.v1.GetOriginalURLResponse
-	(*RedirectRequest)(nil),        // 4: urlshortener.v1.RedirectRequest
-	(*RedirectResponse)(nil),       // 5: urlshortener.v1.RedirectResponse
+var file_proto_v1_urlshortener_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proto_v1_urlshortener_proto_goTypes = []any{
+	(*ShortenURLRequest)(nil),      // 0: proto.v1.ShortenURLRequest
+	(*ShortenURLResponse)(nil),     // 1: proto.v1.ShortenURLResponse
+	(*GetOriginalURLRequest)(nil),  // 2: proto.v1.GetOriginalURLRequest
+	(*GetOriginalURLResponse)(nil), // 3: proto.v1.GetOriginalURLResponse
+	(*RedirectRequest)(nil),        // 4: proto.v1.RedirectRequest
+	(*RedirectResponse)(nil),       // 5: proto.v1.RedirectResponse
 }
-var file_urlshortener_v1_urlshortener_proto_depIdxs = []int32{
-	0, // 0: urlshortener.v1.URLShortenerService.ShortenURL:input_type -> urlshortener.v1.ShortenURLRequest
-	2, // 1: urlshortener.v1.URLShortenerService.GetOriginalURL:input_type -> urlshortener.v1.GetOriginalURLRequest
-	4, // 2: urlshortener.v1.URLShortenerService.Redirect:input_type -> urlshortener.v1.RedirectRequest
-	1, // 3: urlshortener.v1.URLShortenerService.ShortenURL:output_type -> urlshortener.v1.ShortenURLResponse
-	3, // 4: urlshortener.v1.URLShortenerService.GetOriginalURL:output_type -> urlshortener.v1.GetOriginalURLResponse
-	5, // 5: urlshortener.v1.URLShortenerService.Redirect:output_type -> urlshortener.v1.RedirectResponse
+var file_proto_v1_urlshortener_proto_depIdxs = []int32{
+	0, // 0: proto.v1.URLShortenerService.ShortenURL:input_type -> proto.v1.ShortenURLRequest
+	2, // 1: proto.v1.URLShortenerService.GetOriginalURL:input_type -> proto.v1.GetOriginalURLRequest
+	4, // 2: proto.v1.URLShortenerService.Redirect:input_type -> proto.v1.RedirectRequest
+	1, // 3: proto.v1.URLShortenerService.ShortenURL:output_type -> proto.v1.ShortenURLResponse
+	3, // 4: proto.v1.URLShortenerService.GetOriginalURL:output_type -> proto.v1.GetOriginalURLResponse
+	5, // 5: proto.v1.URLShortenerService.Redirect:output_type -> proto.v1.RedirectResponse
 	3, // [3:6] is the sub-list for method output_type
 	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -358,26 +358,26 @@ var file_urlshortener_v1_urlshortener_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_urlshortener_v1_urlshortener_proto_init() }
-func file_urlshortener_v1_urlshortener_proto_init() {
-	if File_urlshortener_v1_urlshortener_proto != nil {
+func init() { file_proto_v1_urlshortener_proto_init() }
+func file_proto_v1_urlshortener_proto_init() {
+	if File_proto_v1_urlshortener_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_urlshortener_v1_urlshortener_proto_rawDesc), len(file_urlshortener_v1_urlshortener_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_v1_urlshortener_proto_rawDesc), len(file_proto_v1_urlshortener_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_urlshortener_v1_urlshortener_proto_goTypes,
-		DependencyIndexes: file_urlshortener_v1_urlshortener_proto_depIdxs,
-		MessageInfos:      file_urlshortener_v1_urlshortener_proto_msgTypes,
+		GoTypes:           file_proto_v1_urlshortener_proto_goTypes,
+		DependencyIndexes: file_proto_v1_urlshortener_proto_depIdxs,
+		MessageInfos:      file_proto_v1_urlshortener_proto_msgTypes,
 	}.Build()
-	File_urlshortener_v1_urlshortener_proto = out.File
-	file_urlshortener_v1_urlshortener_proto_goTypes = nil
-	file_urlshortener_v1_urlshortener_proto_depIdxs = nil
+	File_proto_v1_urlshortener_proto = out.File
+	file_proto_v1_urlshortener_proto_goTypes = nil
+	file_proto_v1_urlshortener_proto_depIdxs = nil
 }

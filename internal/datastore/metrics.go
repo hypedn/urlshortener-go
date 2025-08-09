@@ -20,11 +20,36 @@ const (
 	StatusCollision = "collision"
 )
 
-// DBMetrics contains the Prometheus collectors for application-specific database metrics.
+// Metrics contains the Prometheus collectors for application-specific database metrics.
 // Pool-level stats are handled by the separate PoolStatsCollector.
-type DBMetrics struct {
+type Metrics struct {
 	QueryDuration *prometheus.HistogramVec
 	QueryTotal    *prometheus.CounterVec
+}
+
+// NewMetrics creates and registers the database metrics collectors.
+func NewMetrics(db StatsCollector, dbName string) Metrics {
+	m := Metrics{
+		QueryDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "db_query_duration_seconds",
+			Help:    "The latency of database queries in seconds.",
+			Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5},
+		}, []string{QueryNameLabel}),
+
+		QueryTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "db_query_total",
+			Help: "The total number of database queries.",
+		}, []string{QueryNameLabel, StatusLabel}),
+	}
+
+	poolCollector := NewPoolStatsCollector(db, dbName)
+	prometheus.MustRegister(
+		poolCollector,
+		m.QueryDuration,
+		m.QueryTotal,
+	)
+
+	return m
 }
 
 type StatsCollector interface {
@@ -119,40 +144,4 @@ func (c *PoolStatsCollector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(c.AcquireDuration, prometheus.CounterValue, stats.AcquireDuration().Seconds())
 	ch <- prometheus.MustNewConstMetric(c.MaxIdleDestroy, prometheus.CounterValue, float64(stats.MaxIdleDestroyCount()))
 	ch <- prometheus.MustNewConstMetric(c.MaxLifetimeDestroy, prometheus.CounterValue, float64(stats.MaxLifetimeDestroyCount()))
-}
-
-// NewDBMetrics creates and registers the database metrics collectors.
-// It returns an error if any of the collectors fail to register.
-func NewDBMetrics(db StatsCollector, dbName string) (*DBMetrics, error) {
-	m := &DBMetrics{
-		QueryDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "db_query_duration_seconds",
-			Help:    "The latency of database queries in seconds.",
-			Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5},
-		}, []string{QueryNameLabel}),
-
-		QueryTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "db_query_total",
-			Help: "The total number of database queries.",
-		}, []string{QueryNameLabel, StatusLabel}),
-	}
-
-	// Register the application-specific metrics that are manually updated.
-	collectors := []prometheus.Collector{
-		m.QueryDuration,
-		m.QueryTotal,
-	}
-	for _, c := range collectors {
-		if err := prometheus.Register(c); err != nil {
-			return nil, err
-		}
-	}
-
-	// Register the pool stats collector, which will be scraped on-demand.
-	poolCollector := NewPoolStatsCollector(db, dbName)
-	if err := prometheus.Register(poolCollector); err != nil {
-		return nil, err
-	}
-
-	return m, nil
 }

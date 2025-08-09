@@ -6,11 +6,13 @@ import (
 	"log/slog"
 	"net"
 	"sync"
+	"time"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/ndajr/urlshortener-go/datastore"
-	proto "github.com/ndajr/urlshortener-go/rpcserver/proto/urlshortener/v1"
+	"github.com/ndajr/urlshortener-go/internal/cachestore"
+	"github.com/ndajr/urlshortener-go/internal/datastore"
+	proto "github.com/ndajr/urlshortener-go/proto/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -23,14 +25,25 @@ type Server struct {
 	URLShorteningService URLShortenerService
 }
 
-func NewServer(db datastore.Store, logger *slog.Logger) Server {
-	grpcServer := grpc.NewServer()
+func NewServer(logger *slog.Logger, db datastore.Store, cache *cachestore.Cache) Server {
+	config := cachestore.RateLimiterConfig{
+		Capacity:     10,          // 10 token burst
+		RefillRate:   40,          // 40 tokens per period
+		RefillPeriod: time.Second, // Every second
+	}
+
+	opts := []grpc.ServerOption{}
+	if cache != nil {
+		limiter := cachestore.NewRateLimiter(logger, cache, config)
+		opts = append(opts, grpc.UnaryInterceptor(limiter.UnaryServerInterceptor()))
+	}
+	grpcServer := grpc.NewServer(opts...)
 	grpc_prometheus.Register(grpcServer)
 
 	srv := Server{
 		logger:               logger,
 		grpcServer:           grpcServer,
-		URLShorteningService: NewURLShortenerService(db, logger),
+		URLShorteningService: NewURLShortenerService(logger, db, cache),
 	}
 
 	srv.registerServices(grpcServer)

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             (unknown)
-// source: urlshortener/v1/urlshortener.proto
+// source: proto/v1/urlshortener.proto
 
 package v1
 
@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	URLShortenerService_ShortenURL_FullMethodName     = "/urlshortener.v1.URLShortenerService/ShortenURL"
-	URLShortenerService_GetOriginalURL_FullMethodName = "/urlshortener.v1.URLShortenerService/GetOriginalURL"
-	URLShortenerService_Redirect_FullMethodName       = "/urlshortener.v1.URLShortenerService/Redirect"
+	URLShortenerService_ShortenURL_FullMethodName     = "/proto.v1.URLShortenerService/ShortenURL"
+	URLShortenerService_GetOriginalURL_FullMethodName = "/proto.v1.URLShortenerService/GetOriginalURL"
+	URLShortenerService_Redirect_FullMethodName       = "/proto.v1.URLShortenerService/Redirect"
 )
 
 // URLShortenerServiceClient is the client API for URLShortenerService service.
@@ -186,7 +186,7 @@ func _URLShortenerService_Redirect_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var URLShortenerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "urlshortener.v1.URLShortenerService",
+	ServiceName: "proto.v1.URLShortenerService",
 	HandlerType: (*URLShortenerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -203,5 +203,5 @@ var URLShortenerService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "urlshortener/v1/urlshortener.proto",
+	Metadata: "proto/v1/urlshortener.proto",
 }

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ndajr/urlshortener-go/core"
-	proto "github.com/ndajr/urlshortener-go/rpcserver/proto/urlshortener/v1"
+	"github.com/ndajr/urlshortener-go/internal/core"
+	proto "github.com/ndajr/urlshortener-go/proto/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
