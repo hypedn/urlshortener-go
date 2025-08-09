@@ -123,24 +123,20 @@ func parseURL(originalURL string) (string, error) {
 		return "", fmt.Errorf("url exceeds maximum length of %d characters", core.MaxURLLength)
 	}
 
-	if !strings.HasPrefix(originalURL, "http://") && !strings.HasPrefix(originalURL, "https://") {
-		return "", fmt.Errorf("only http and https urls are accepted")
-	}
-
 	parsedURL, err := url.Parse(originalURL)
 	if err != nil {
-		return "", fmt.Errorf("invalid url format")
+		return "", fmt.Errorf("invalid url format: %w", err)
+	}
+
+	// We only accept absolute URLs with http or https schemes.
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return "", fmt.Errorf("only http and https schemes are accepted")
 	}
 
 	// The `//` check is to prevent open redirects like `//example.com`.
 	// The `..` check is to prevent path traversal attacks.
-	// We check them in the path to avoid false positives with `https://`.
 	if strings.Contains(parsedURL.Path, "..") || strings.Contains(parsedURL.Path, "//") {
 		return "", fmt.Errorf("potentially unsafe url path")
-	}
-
-	if !parsedURL.IsAbs() || parsedURL.Host == "" {
-		return "", fmt.Errorf("invalid url: must be an absolute url with a host")
 	}
 
 	if isLocalhost(parsedURL.Host) {

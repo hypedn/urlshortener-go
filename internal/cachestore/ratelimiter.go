@@ -3,7 +3,6 @@ package cachestore
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -37,7 +36,7 @@ const script = `
 	
 	if periods > 0 then
 		tokens = math.min(capacity, tokens + (periods * refill_rate))
-		last_refill = now
+		last_refill = last_refill + (periods * refill_period)
 	end
 
 	-- Try to consume one token
@@ -94,7 +93,8 @@ func (rl RateLimiter) Allow(ctx context.Context, key string) (bool, error) {
 	).Result()
 
 	if err != nil {
-		return false, fmt.Errorf("redis eval failed: %w", err)
+		rl.logger.Error("redis eval failed", "error", err)
+		return false, ErrRateLimiterInternal
 	}
 
 	return result.(int64) == 1, nil
