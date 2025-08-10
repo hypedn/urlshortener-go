@@ -18,12 +18,14 @@ A robust and scalable URL shortener service built with Go. This project is desig
 
 The project follows a standard Go project layout to separate concerns and improve maintainability.
 
--   `/cmd`: Entry point currently for the `urlshortener` CLI. The server currently runs from main.go, mainly due to the ease of embedding apidocs file.
--   `/core`: Contains the core business logic and data structures of the application, such as the `URL` struct and the `GenerateShortCode` function in `core/core.go`. This package is designed to have no external dependencies on datastores or transport layers.
--   `/datastore`: Handles all database and cache interactions. It provides an abstraction layer (`Store`) over Postgres and Redis.
--   `/rpcserver`: Defines and implements the gRPC service.
-    -   `/proto`: Contains the Protobuf definition files.
--   `/httpserver`: Contains the implementation of the HTTP/REST server, including the gRPC-gateway setup.
+-   `/cmd`: Entry points for the application binaries.
+-   `/internal`: Contains the private application and library code, not importable by other projects.
+    -   `/cachestore`: Implements the caching layer using Redis, including the LFU eviction policy logic and rate limiting.
+    -   `/core`: Contains the core business logic and data structures of the application. This package is designed to have no external dependencies on datastores or transport layers.
+    -   `/datastore`: Handles all database interactions, providing an abstraction layer (`Store`) over Postgres.
+    -   `/httpserver`: Contains the implementation of the HTTP/REST server, including the gRPC-gateway setup.
+    -   `/rpcserver`: Defines and implements the gRPC service handlers.
+-   `/proto`: Contains the Protobuf definition files (`.proto`) that define the API contract.
 -   `/systemtest`: Contains end-to-end system tests that run against a live instance of the service and its dependencies.
 -   `/.migrations`: Database migration files.
 -   `Makefile`: Contains helper commands for development tasks like running, testing, and linting.
@@ -36,21 +38,21 @@ This service is built with scalability and maintainability in mind, drawing insp
 ### High-Level Diagram
 
 ```
-+--------+      +----------------+      +---------------------+      +----------------+
-|        |----->|                |----->|                     |----->|                |
-| Client |      |  gRPC-Gateway  |      |  Go URL Shortener   |      |      Redis     |
-| (User/ |      | (HTTP to gRPC) |      |       Service       |      | (Cache - LFU)  |
-| Service)|<-----|                |<-----|                     |<-----|                |
-+--------+      +----------------+      +---------+-----------+      +----------------+
-                                                  |
-                                                  |
-                                                  v
-                                           +------------+
-                                           |            |
-                                           |  Postgres  |
-                                           | (Database) |
-                                           |            |
-                                           +------------+
++----------+      +----------------+      +---------------------+      +----------------+
+|          |----->|                |----->|                     |----->|                |
+| Client   |      |  gRPC-Gateway  |      |  Go URL Shortener   |      |      Redis     |
+| (User/   |      | (HTTP to gRPC) |      |       Service       |      | (Cache - LFU)  |
+| Service) |<-----|                |<-----|                     |<-----|                |
++----------+      +----------------+      +---------+-----------+      +----------------+
+                                                    |
+                                                    |
+                                                    v
+                                             +------------+
+                                             |            |
+                                             |  Postgres  |
+                                             | (Database) |
+                                             |            |
+                                             +------------+
 ```
 
 ### Capacity Estimation (Back-of-the-envelope)
@@ -161,8 +163,35 @@ The easiest way to run the entire stack (Go service, Postgres, Redis) is using t
 
 The `Makefile` contains several useful commands for development:
 
+*   `make run`: Run the urlshortener service and its dependencies defined in docker-compose.
+*   `make run.cli`: Run the command-line interface for simple debugging and testing.
 *   `make lint`: Run linters (`golangci-lint` and `buf`) to check code quality and style.
 *   `make test`: Run the system tests.
 *   `make generate`: Generate code from Protobuf definitions and Swagger specs (apidocs.swagger.json).
 *   `make install.cli`: Build and install the command-line interface for the service.
-*   `make run.cli`: Run the command-line interface.
+
+### Deployment
+
+All kubernetes manifests are defined in `.kubernetes`. Prerequisites:
+-   `kubectl`
+-   `kustomize` (usually bundled with `kubectl` v1.14+)
+
+#### Directory Structure
+
+-   `/service`: Contains the base Kubernetes manifests that are common across all environments.
+-   `/overlays`: Contains environment-specific configurations (overlays) that patch the base manifests.
+    -   `/stg`: Configuration for the **staging** environment.
+    -   `/prod`: Configuration for the **production** environment.
+
+1. Build and push the docker image to the application registry. Make sure to update manifests' images to reflect this change.
+2. Update image tag in overlays
+3. Compile manifests: 
+    ```
+    kustomize build .kubernetes/overlays/stg
+    kustomize build .kubernetes/overlays/prod
+    ``` 
+4. Deploy manifests:
+    ```
+    kubectl apply -k .kubernetes/overlays/stg
+    kubectl apply -k .kubernetes/overlays/prod
+    ```
