@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: urlshortener-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: urlshortener
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    # Allow traffic from pods in the same namespace with a label matching a common ingress controller
+    # Adjust this to match your ingress controller or API gateway if needed.
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    # Allow traffic from any pod within the same namespace for internal communication.
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8081
+  egress:
+  # Allow DNS lookups to CoreDNS/kube-dns
+  - to:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow traffic to Redis (assumes Redis pods have the label 'app: redis')
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+  # Allow traffic to Postgres (assumes Postgres pods have the label 'app: postgres')
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres

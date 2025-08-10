@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: urlshortener
+  labels:
+    app: urlshortener
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: urlshortener
+  template:
+    metadata:
+      labels:
+        app: urlshortener
+        environmnent: stg
+    spec:
+      containers:
+      - name: urlshortener
+        imagePullPolicy: Always
+        env:
+          - name: ENV
+            value: stg
+          - name: GOMAXPROCS
+            valueFrom:
+              resourceFieldRef:
+                resource: limits.cpu
