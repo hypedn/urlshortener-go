@@ -15,6 +15,7 @@ import (
 	proto "github.com/ndajr/urlshortener-go/proto/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type Server struct {
@@ -22,7 +23,8 @@ type Server struct {
 	grpcServer *grpc.Server
 	gwmux      *runtime.ServeMux
 
-	URLShorteningService URLShortenerService
+	healthService        HealthService
+	urlShorteningService URLShortenerService
 }
 
 func NewServer(logger *slog.Logger, db datastore.Store, cache *cachestore.Cache) Server {
@@ -43,7 +45,8 @@ func NewServer(logger *slog.Logger, db datastore.Store, cache *cachestore.Cache)
 	srv := Server{
 		logger:               logger,
 		grpcServer:           grpcServer,
-		URLShorteningService: NewURLShortenerService(logger, db, cache),
+		healthService:        NewHealthService(db, cache),
+		urlShorteningService: NewURLShortenerService(logger, db, cache),
 	}
 
 	srv.registerServices(grpcServer)
@@ -51,7 +54,8 @@ func NewServer(logger *slog.Logger, db datastore.Store, cache *cachestore.Cache)
 }
 
 func (s *Server) registerServices(srv *grpc.Server) {
-	proto.RegisterURLShortenerServiceServer(srv, s.URLShorteningService)
+	healthpb.RegisterHealthServer(srv, s.healthService)
+	proto.RegisterURLShortenerServiceServer(srv, s.urlShorteningService)
 }
 
 func (s *Server) Run(ctx context.Context, address string, wg *sync.WaitGroup) error {
@@ -106,4 +110,12 @@ func (s *Server) Run(ctx context.Context, address string, wg *sync.WaitGroup) er
 
 func (s *Server) NewGatewayMux() *runtime.ServeMux {
 	return s.gwmux
+}
+
+func (s *Server) GetURL(ctx context.Context, shortCode string) (string, error) {
+	res, err := s.urlShorteningService.GetOriginalURL(ctx, &proto.GetOriginalURLRequest{ShortCode: shortCode})
+	if err != nil {
+		return "", err
+	}
+	return res.OriginalUrl, nil
 }

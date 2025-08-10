@@ -24,6 +24,7 @@ const (
 type Cache struct {
 	rdb     *redis.Client
 	metrics Metrics
+	logger  *slog.Logger
 }
 
 func NewCache(ctx context.Context, connStr string, logger *slog.Logger) (*Cache, error) {
@@ -34,7 +35,13 @@ func NewCache(ctx context.Context, connStr string, logger *slog.Logger) (*Cache,
 		Addr: connStr,
 	})
 
-	if err := ping(ctx, logger, rdb); err != nil {
+	c := &Cache{
+		rdb:     rdb,
+		logger:  logger,
+		metrics: NewMetrics(),
+	}
+
+	if err := c.Ping(ctx); err != nil {
 		return &Cache{}, fmt.Errorf("cache: failed to ping redis: %w", err)
 	}
 
@@ -48,26 +55,21 @@ func NewCache(ctx context.Context, connStr string, logger *slog.Logger) (*Cache,
 		logger.Warn("could not set redis maxmemory-policy to allkeys-lfu, ensure it is configured on the server", "error", err)
 	}
 
-	c := &Cache{
-		rdb:     rdb,
-		metrics: NewMetrics(),
-	}
-
 	return c, nil
 }
 
-func ping(ctx context.Context, logger *slog.Logger, client *redis.Client) error {
+func (c Cache) Ping(ctx context.Context) error {
 	ticker := time.NewTicker(time.Second * 1)
 	defer ticker.Stop()
 
 	// Loop until the context is cancelled or the ping is successful.
 	for {
-		_, err := client.Ping(ctx).Result()
+		_, err := c.rdb.Ping(ctx).Result()
 		if err == nil {
 			break // Ping successful.
 		}
 
-		logger.Warn("unable to establish connection, retrying...", "error", err)
+		c.logger.Warn("unable to establish connection, retrying...", "error", err)
 
 		select {
 		case <-ctx.Done():

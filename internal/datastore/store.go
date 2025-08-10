@@ -44,7 +44,19 @@ func NewStore(ctx context.Context, logger *slog.Logger, dbConnStr string) (Store
 		return Store{}, fmt.Errorf("store: failed to create connection pool: %w", err)
 	}
 
-	if pingErr := ping(ctx, db, logger); pingErr != nil {
+	config, err := pgxpool.ParseConfig(dbConnStr)
+	if err != nil {
+		db.Close()
+		return Store{}, fmt.Errorf("store: failed to parse db config for metrics: %w", err)
+	}
+
+	store := Store{
+		db:        db,
+		logger:    logger,
+		dbMetrics: NewMetrics(db, config.ConnConfig.Database),
+	}
+
+	if pingErr := store.Ping(ctx); pingErr != nil {
 		return Store{}, pingErr
 	}
 
@@ -54,43 +66,7 @@ func NewStore(ctx context.Context, logger *slog.Logger, dbConnStr string) (Store
 	}
 	logger.Info("successfully connected to db", "addr", dbConnStr)
 
-	// Parse the DSN to get the database name for use as a Prometheus label.
-	config, err := pgxpool.ParseConfig(dbConnStr)
-	if err != nil {
-		db.Close()
-		return Store{}, fmt.Errorf("store: failed to parse db config for metrics: %w", err)
-	}
-	dbName := config.ConnConfig.Database
-
-	store := Store{
-		db:        db,
-		logger:    logger,
-		dbMetrics: NewMetrics(db, dbName),
-	}
-
 	return store, nil
-}
-
-func ping(ctx context.Context, db *pgxpool.Pool, logger *slog.Logger) (err error) {
-	ticker := time.NewTicker(time.Second * 1)
-	defer ticker.Stop()
-
-	// Loop until the context is cancelled or the ping is successful.
-	for {
-		err = db.Ping(ctx)
-		if err == nil {
-			break // Ping successful.
-		}
-
-		logger.Warn("unable to establish connection, retrying...", "error", err)
-
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("db connection timed out or was cancelled: %w (last error: %v)", ctx.Err(), err)
-		case <-ticker.C:
-		}
-	}
-	return nil
 }
 
 func runMigrations(connStr string) (err error) {
@@ -116,6 +92,28 @@ func runMigrations(connStr string) (err error) {
 	}
 	if runErr := m.Up(); runErr != nil && !errors.Is(runErr, migrate.ErrNoChange) {
 		return fmt.Errorf("store: failed to run migrations: %w", runErr)
+	}
+	return nil
+}
+
+func (s Store) Ping(ctx context.Context) error {
+	ticker := time.NewTicker(time.Second * 1)
+	defer ticker.Stop()
+
+	// Loop until the context is cancelled or the ping is successful.
+	for {
+		err := s.db.Ping(ctx)
+		if err == nil {
+			break // Ping successful.
+		}
+
+		s.logger.Warn("unable to establish connection, retrying...", "error", err)
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("db connection timed out or was cancelled: %w (last error: %v)", ctx.Err(), err)
+		case <-ticker.C:
+		}
 	}
 	return nil
 }

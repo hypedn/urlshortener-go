@@ -6,8 +6,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	proto "github.com/ndajr/urlshortener-go/proto/v1"
 )
 
 func (s *Server) redirectHandler() http.HandlerFunc {
@@ -23,7 +21,7 @@ func (s *Server) redirectHandler() http.HandlerFunc {
 			return
 		}
 
-		resp, err := s.server.URLShorteningService.GetOriginalURL(r.Context(), &proto.GetOriginalURLRequest{ShortCode: shortCode})
+		originalURL, err := s.server.GetURL(r.Context(), shortCode)
 		if err != nil {
 			if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
 				http.NotFound(w, r)
@@ -35,7 +33,7 @@ func (s *Server) redirectHandler() http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Location", resp.GetOriginalUrl())
+		w.Header().Set("Location", originalURL)
 
 		// Return 200 OK for Swagger UI, otherwise, return 302 Found redirect.
 		if strings.HasSuffix(r.Header.Get("Referer"), docsURL) {
@@ -43,6 +41,6 @@ func (s *Server) redirectHandler() http.HandlerFunc {
 			return
 		}
 
-		http.Redirect(w, r, resp.GetOriginalUrl(), http.StatusFound)
+		http.Redirect(w, r, originalURL, http.StatusFound)
 	}
 }
