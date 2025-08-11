@@ -6,11 +6,13 @@ lint:
 .PHONY: generate
 generate:
 	@buf generate
+	@yq e -P -o=yaml ./cmd/urlshortener-server/apidocs.swagger.json > swagger.yaml
 
 .PHONY: install.deps
 install.deps:
 	@brew install bufbuild/buf/buf
 	@brew install golangci-lint
+	@brew install yq
 
 .PHONY: install.tools
 install.tools:
@@ -24,13 +26,9 @@ install.cli:
 run.dev:
 	@docker-compose up -d
 
-.PHONY: run.cli
-run.cli:
-	@go run ./cmd/urlshortener/main.go
-
 .PHONY: run
 run: run.dev
-	@go build -o /tmp/urlshortener main.go
+	@go build -o /tmp/urlshortener ./cmd/urlshortener-server/main.go
 	@/tmp/urlshortener
 
 .PHONY: test

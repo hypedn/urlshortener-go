@@ -111,7 +111,7 @@ Follow these instructions to get the project running on your local machine for d
 
 ### Prerequisites
 
-*   Go (version 1.18+)
+*   Go (version 1.24+)
 *   Docker & Docker Compose
 *   Make
 

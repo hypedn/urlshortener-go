@@ -17,10 +17,10 @@ linters:
       enable-all: true
   exclusions:
     paths:
-      - rpc/proto
+      - proto
     generated: strict  # This excludes generated files based on Go's standard comments
 
 formatters:
   exclusions:
     paths:
-      - rpc/proto
+      - proto
