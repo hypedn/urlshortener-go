@@ -1,40 +1,33 @@
-# syntax=docker/dockerfile:1
-
-# ---- Builder Stage ----
-# Use a specific version of the Go Alpine image for reproducibility.
+# ---- Build Stage ----
 # The version must match go.mod
 FROM golang:1.24-alpine AS builder
 
-WORKDIR /app
+ARG APP_VERSION="v0.0.0-dev"
+ARG GIT_COMMIT="dev"
 
-# Install build tools. git is needed for fetching Go modules if they are not vendored.
+# Install build dependencies (git is needed for go modules)
 RUN apk add --no-cache git
-
-# Copy go.mod and go.sum files to leverage Docker's layer caching.
-# This step is only re-run if these files change.
+WORKDIR /src
+# Copy go module files and download dependencies to leverage Docker's layer cache
 COPY go.mod go.sum ./
 RUN go mod download
-
+# Copy the rest of the source code
 COPY . .
-
-# Build the Go application.
-# - CGO_ENABLED=0 creates a static binary, which is important for minimal base images.
-# - ldflags="-s -w" strips debugging information, reducing the binary size.
-# The output is named 'urlshortener' and placed in the root of the builder image.
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /urlshortener .
+# Build the application binary. CGO_ENABLED=0 creates a static binary.
+# The -ldflags option is used to embed build-time variables into the binary.
+# -w -s strips debug information, reducing the binary size.
+RUN CGO_ENABLED=0 go build \
+    -ldflags="-w -s -X main.version=${APP_VERSION} -X main.gitCommit=${GIT_COMMIT}" \
+    -o /app/urlshortener \
+    ./cmd/urlshortener-server
 
 # ---- Final Stage ----
 FROM alpine:3.20
 
-# Install ca-certificates for any potential TLS/SSL connections (e.g., to a database).
 RUN apk --no-cache add ca-certificates
-
-# Create a non-root user and group for security.
-# Running as a non-root user is a security best practice.
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
 WORKDIR /app
-COPY --from=builder /urlshortener .
+COPY --from=builder /app/urlshortener .
 COPY .migrations ./.migrations
 RUN chown -R appuser:appgroup /app
 USER appuser

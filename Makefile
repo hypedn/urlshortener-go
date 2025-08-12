@@ -1,3 +1,5 @@
+TAG=ndajr/urlshortener
+
 .PHONY: lint
 lint:
 	@golangci-lint run ./... --verbose

@@ -17,6 +17,11 @@ import (
 )
 
 var (
+	version   = "dev"
+	gitCommit = "none"
+)
+
+var (
 	httpServerEndpoint = flag.String("http-server-endpoint", "localhost:8080", "http server endpoint")
 	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:8081", "gRPC server endpoint")
 	dbAddr             = flag.String("db-addr", "postgres://ndev:@localhost:5432/urlshortener?sslmode=disable", "database DSN")
@@ -33,6 +38,7 @@ func main() {
 	defer shutdown()
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger.Info("starting urlshortener service", "version", version, "commit", gitCommit)
 
 	db, err := datastore.NewStore(ctx, logger, *dbAddr)
 	if err != nil {
