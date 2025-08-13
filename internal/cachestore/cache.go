@@ -82,7 +82,10 @@ func (c Cache) Ping(ctx context.Context) error {
 
 // GetURL retrieves an URL from the cache. It returns redis.Nil if the key does not exist.
 func (c Cache) GetURL(ctx context.Context, key string) (string, error) {
-	val, err := c.rdb.Get(ctx, toInternalKey(key)).Result()
+	// Use GETEX to retrieve the value and reset the TTL in one atomic operation.
+	// This implements a "sliding expiration" policy, ensuring that frequently
+	// accessed URLs remain in the cache. This command requires Redis v6.2+.
+	val, err := c.rdb.GetEx(ctx, toInternalKey(key), urlTTL).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			c.metrics.Misses.WithLabelValues(urlKeyPrefix).Inc()
