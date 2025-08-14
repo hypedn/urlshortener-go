@@ -71,21 +71,25 @@ func (s *Server) Run(ctx context.Context, address string, wg *sync.WaitGroup) er
 		}
 	}()
 
-	gwmux := runtime.NewServeMux(runtime.WithErrorHandler(NewCustomHTTPErrorHandler(s.logger)))
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	gwConn, err := grpc.NewClient(address, opts...)
 	if err != nil {
 		return err
 	}
 
-	err = proto.RegisterURLShortenerServiceHandler(ctx, gwmux, gwConn)
+	healthClient := healthpb.NewHealthClient(gwConn)
+	s.gwmux = runtime.NewServeMux(
+		runtime.WithErrorHandler(NewCustomHTTPErrorHandler(s.logger)),
+		runtime.WithHealthzEndpoint(healthClient),
+	)
+
+	err = proto.RegisterURLShortenerServiceHandler(ctx, s.gwmux, gwConn)
 	if err != nil {
 		if closeErr := gwConn.Close(); closeErr != nil {
 			s.logger.Error("failed to close gateway client connection after registration error", "error", closeErr)
 		}
 		return err
 	}
-	s.gwmux = gwmux
 
 	wg.Add(1)
 	go func() {

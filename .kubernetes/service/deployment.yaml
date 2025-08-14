@@ -40,17 +40,19 @@ spec:
             cpu: "2000m"
             memory: "256Mi"
         livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
           failureThreshold: 3
-          grpc:
-            port: 8081
           initialDelaySeconds: 25
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
         readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
           failureThreshold: 1
-          grpc:
-            port: 8081
           initialDelaySeconds: 25
           periodSeconds: 10
           successThreshold: 1

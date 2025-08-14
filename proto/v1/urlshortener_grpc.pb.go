@@ -21,7 +21,6 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	URLShortenerService_ShortenURL_FullMethodName     = "/proto.v1.URLShortenerService/ShortenURL"
 	URLShortenerService_GetOriginalURL_FullMethodName = "/proto.v1.URLShortenerService/GetOriginalURL"
-	URLShortenerService_Redirect_FullMethodName       = "/proto.v1.URLShortenerService/Redirect"
 )
 
 // URLShortenerServiceClient is the client API for URLShortenerService service.
@@ -32,10 +31,6 @@ type URLShortenerServiceClient interface {
 	ShortenURL(ctx context.Context, in *ShortenURLRequest, opts ...grpc.CallOption) (*ShortenURLResponse, error)
 	// Retrieves the original URL for a given short code.
 	GetOriginalURL(ctx context.Context, in *GetOriginalURLRequest, opts ...grpc.CallOption) (*GetOriginalURLResponse, error)
-	// Redirects a short code to its original URL.
-	// This RPC is defined for OpenAPI documentation purposes. The actual
-	// redirection is handled by a custom HTTP handler at the root path.
-	Redirect(ctx context.Context, in *RedirectRequest, opts ...grpc.CallOption) (*RedirectResponse, error)
 }
 
 type uRLShortenerServiceClient struct {
@@ -66,16 +61,6 @@ func (c *uRLShortenerServiceClient) GetOriginalURL(ctx context.Context, in *GetO
 	return out, nil
 }
 
-func (c *uRLShortenerServiceClient) Redirect(ctx context.Context, in *RedirectRequest, opts ...grpc.CallOption) (*RedirectResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RedirectResponse)
-	err := c.cc.Invoke(ctx, URLShortenerService_Redirect_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // URLShortenerServiceServer is the server API for URLShortenerService service.
 // All implementations must embed UnimplementedURLShortenerServiceServer
 // for forward compatibility.
@@ -84,10 +69,6 @@ type URLShortenerServiceServer interface {
 	ShortenURL(context.Context, *ShortenURLRequest) (*ShortenURLResponse, error)
 	// Retrieves the original URL for a given short code.
 	GetOriginalURL(context.Context, *GetOriginalURLRequest) (*GetOriginalURLResponse, error)
-	// Redirects a short code to its original URL.
-	// This RPC is defined for OpenAPI documentation purposes. The actual
-	// redirection is handled by a custom HTTP handler at the root path.
-	Redirect(context.Context, *RedirectRequest) (*RedirectResponse, error)
 	mustEmbedUnimplementedURLShortenerServiceServer()
 }
 
@@ -103,9 +84,6 @@ func (UnimplementedURLShortenerServiceServer) ShortenURL(context.Context, *Short
 }
 func (UnimplementedURLShortenerServiceServer) GetOriginalURL(context.Context, *GetOriginalURLRequest) (*GetOriginalURLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOriginalURL not implemented")
-}
-func (UnimplementedURLShortenerServiceServer) Redirect(context.Context, *RedirectRequest) (*RedirectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Redirect not implemented")
 }
 func (UnimplementedURLShortenerServiceServer) mustEmbedUnimplementedURLShortenerServiceServer() {}
 func (UnimplementedURLShortenerServiceServer) testEmbeddedByValue()                             {}
@@ -164,24 +142,6 @@ func _URLShortenerService_GetOriginalURL_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortenerService_Redirect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RedirectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(URLShortenerServiceServer).Redirect(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: URLShortenerService_Redirect_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServiceServer).Redirect(ctx, req.(*RedirectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // URLShortenerService_ServiceDesc is the grpc.ServiceDesc for URLShortenerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -196,10 +156,6 @@ var URLShortenerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOriginalURL",
 			Handler:    _URLShortenerService_GetOriginalURL_Handler,
-		},
-		{
-			MethodName: "Redirect",
-			Handler:    _URLShortenerService_Redirect_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -37,7 +37,7 @@ func NewServer(server rpcserver.Server, gwmux *runtime.ServeMux, logger *slog.Lo
 func (s *Server) registerEndpoints(gwmux *runtime.ServeMux, swaggerJSON []byte) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.Handle("/api/", gwmux)
+	mux.Handle("/healthz", gwmux)
 	mux.HandleFunc("/swagger.json", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, err := w.Write(swaggerJSON)
@@ -47,6 +47,7 @@ func (s *Server) registerEndpoints(gwmux *runtime.ServeMux, swaggerJSON []byte) 
 		}
 	})
 	mux.Handle(docsURL, swaggerui.New("URL Shortener API", "/swagger.json", docsURL))
+	mux.Handle("/api/", gwmux)
 	mux.HandleFunc("/", s.redirectHandler())
 
 	return mux

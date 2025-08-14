@@ -55,45 +55,6 @@ paths:
             $ref: '#/definitions/v1ShortenURLRequest'
       tags:
         - URLShortenerService
-  /{shortCode}:
-    get:
-      summary: Redirects a short URL to the original URL
-      description: |-
-        Given a short code, this endpoint performs an HTTP 302 redirect to the corresponding original URL.
-
-        **Note for Swagger UI users:** Due to browser security restrictions, clicking 'Execute' will not perform a real redirect. Instead, it will return a `200 OK` response with the destination URL in the `Location` header, allowing you to see what the redirect target would be.
-      operationId: URLShortenerService_Redirect
-      responses:
-        "200":
-          description: OK. The original URL is returned in the 'Location' header.
-          schema:
-            $ref: '#/definitions/v1RedirectResponse'
-          headers:
-            Location:
-              description: The original URL to redirect to.
-              type: string
-        "302":
-          description: Found. Redirects to the original URL.
-          schema: {}
-          headers:
-            Location:
-              description: The original URL to redirect to.
-              type: string
-        "404":
-          description: Not Found. The short code does not exist.
-          schema: {}
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/rpcStatus'
-      parameters:
-        - name: shortCode
-          description: The short code to redirect to the original URL.
-          in: path
-          required: true
-          type: string
-      tags:
-        - Redirect
 definitions:
   protobufAny:
     type: object
@@ -120,8 +81,6 @@ definitions:
       originalUrl:
         type: string
         description: The original long URL.
-  v1RedirectResponse:
-    type: object
   v1ShortenURLRequest:
     type: object
     properties:

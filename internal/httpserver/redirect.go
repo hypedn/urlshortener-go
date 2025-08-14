@@ -33,14 +33,6 @@ func (s *Server) redirectHandler() http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Location", originalURL)
-
-		// Return 200 OK for Swagger UI, otherwise, return 302 Found redirect.
-		if strings.HasSuffix(r.Header.Get("Referer"), docsURL) {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
 		http.Redirect(w, r, originalURL, http.StatusFound)
 	}
 }

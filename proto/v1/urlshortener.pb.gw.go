@@ -101,45 +101,6 @@ func local_request_URLShortenerService_GetOriginalURL_0(ctx context.Context, mar
 	return msg, metadata, err
 }
 
-func request_URLShortenerService_Redirect_0(ctx context.Context, marshaler runtime.Marshaler, client URLShortenerServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq RedirectRequest
-		metadata runtime.ServerMetadata
-		err      error
-	)
-	if req.Body != nil {
-		_, _ = io.Copy(io.Discard, req.Body)
-	}
-	val, ok := pathParams["short_code"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "short_code")
-	}
-	protoReq.ShortCode, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "short_code", err)
-	}
-	msg, err := client.Redirect(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-}
-
-func local_request_URLShortenerService_Redirect_0(ctx context.Context, marshaler runtime.Marshaler, server URLShortenerServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq RedirectRequest
-		metadata runtime.ServerMetadata
-		err      error
-	)
-	val, ok := pathParams["short_code"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "short_code")
-	}
-	protoReq.ShortCode, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "short_code", err)
-	}
-	msg, err := server.Redirect(ctx, &protoReq)
-	return msg, metadata, err
-}
-
 // RegisterURLShortenerServiceHandlerServer registers the http handlers for service URLShortenerService to "mux".
 // UnaryRPC     :call URLShortenerServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -185,26 +146,6 @@ func RegisterURLShortenerServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 		forward_URLShortenerService_GetOriginalURL_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
-	mux.Handle(http.MethodGet, pattern_URLShortenerService_Redirect_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.v1.URLShortenerService/Redirect", runtime.WithHTTPPathPattern("/{short_code}"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_URLShortenerService_Redirect_0(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_URLShortenerService_Redirect_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
 	return nil
@@ -280,34 +221,15 @@ func RegisterURLShortenerServiceHandlerClient(ctx context.Context, mux *runtime.
 		}
 		forward_URLShortenerService_GetOriginalURL_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodGet, pattern_URLShortenerService_Redirect_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/proto.v1.URLShortenerService/Redirect", runtime.WithHTTPPathPattern("/{short_code}"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_URLShortenerService_Redirect_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_URLShortenerService_Redirect_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
 	return nil
 }
 
 var (
 	pattern_URLShortenerService_ShortenURL_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "shorten"}, ""))
 	pattern_URLShortenerService_GetOriginalURL_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "original", "short_code"}, ""))
-	pattern_URLShortenerService_Redirect_0       = runtime.MustPattern(runtime.NewPattern(1, []int{1, 0, 4, 1, 5, 0}, []string{"short_code"}, ""))
 )
 
 var (
 	forward_URLShortenerService_ShortenURL_0     = runtime.ForwardResponseMessage
 	forward_URLShortenerService_GetOriginalURL_0 = runtime.ForwardResponseMessage
-	forward_URLShortenerService_Redirect_0       = runtime.ForwardResponseMessage
 )
