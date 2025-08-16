@@ -13,6 +13,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/ndajr/urlshortener-go/internal/config"
 	"github.com/ndajr/urlshortener-go/internal/core"
 )
 
@@ -35,16 +36,19 @@ type Store struct {
 }
 
 // NewStore establishes a database connection and returns a new Store.
-func NewStore(ctx context.Context, logger *slog.Logger, dbConnStr string) (Store, error) {
+func NewStore(ctx context.Context, logger *slog.Logger, cfg config.AppSettings) (Store, error) {
+	if cfg.DBAddress == "" {
+		return Store{}, fmt.Errorf("missing db address")
+	}
 	ctx, cancel := context.WithTimeout(ctx, dbConnectTimeout)
 	defer cancel()
 
-	db, err := pgxpool.New(ctx, dbConnStr)
+	db, err := pgxpool.New(ctx, cfg.DBAddress)
 	if err != nil {
 		return Store{}, fmt.Errorf("store: failed to create connection pool: %w", err)
 	}
 
-	config, err := pgxpool.ParseConfig(dbConnStr)
+	config, err := pgxpool.ParseConfig(cfg.DBAddress)
 	if err != nil {
 		db.Close()
 		return Store{}, fmt.Errorf("store: failed to parse db config for metrics: %w", err)
@@ -60,11 +64,11 @@ func NewStore(ctx context.Context, logger *slog.Logger, dbConnStr string) (Store
 		return Store{}, pingErr
 	}
 
-	if migrErr := runMigrations(dbConnStr); migrErr != nil {
+	if migrErr := runMigrations(cfg.DBAddress); migrErr != nil {
 		db.Close()
 		return Store{}, fmt.Errorf("store: failed to run migrations: %w", migrErr)
 	}
-	logger.Info("successfully connected to db", "addr", dbConnStr)
+	logger.Info("successfully connected to db", "addr", cfg.DBAddress)
 
 	return store, nil
 }

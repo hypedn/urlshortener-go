@@ -7,38 +7,36 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/ndajr/urlshortener-go/internal/config"
 	"github.com/redis/go-redis/v9"
 )
 
-const (
-	// urlKeyPrefix is the label used for URL cache metrics.
-	urlKeyPrefix = "url"
-
-	// cacheConnectTimeout is the timeout for establishing redis connection.
-	cacheConnectTimeout = 15 * time.Second
-
-	// urlTTL is the time to expire keys on the cache.
-	urlTTL = time.Hour
-)
+// cacheConnectTimeout is the timeout for establishing redis connection.
+const cacheConnectTimeout = 15 * time.Second
 
 type Cache struct {
 	rdb     *redis.Client
 	metrics Metrics
 	logger  *slog.Logger
+	cfg     config.Redis
 }
 
-func NewCache(ctx context.Context, connStr string, logger *slog.Logger) (*Cache, error) {
+func NewCache(ctx context.Context, logger *slog.Logger, cfg config.Redis) (*Cache, error) {
+	if cfg.Addr == "" {
+		return &Cache{}, fmt.Errorf("missing redis address")
+	}
 	ctx, cancel := context.WithTimeout(ctx, cacheConnectTimeout)
 	defer cancel()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr: connStr,
+		Addr: cfg.Addr,
 	})
 
 	c := &Cache{
 		rdb:     rdb,
 		logger:  logger,
 		metrics: NewMetrics(),
+		cfg:     cfg,
 	}
 
 	if err := c.Ping(ctx); err != nil {
@@ -85,24 +83,24 @@ func (c Cache) GetURL(ctx context.Context, key string) (string, error) {
 	// Use GETEX to retrieve the value and reset the TTL in one atomic operation.
 	// This implements a "sliding expiration" policy, ensuring that frequently
 	// accessed URLs remain in the cache. This command requires Redis v6.2+.
-	val, err := c.rdb.GetEx(ctx, toInternalKey(key), urlTTL).Result()
+	val, err := c.rdb.GetEx(ctx, c.toInternalKey(key), c.cfg.UrlTTL).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			c.metrics.Misses.WithLabelValues(urlKeyPrefix).Inc()
+			c.metrics.Misses.WithLabelValues(c.cfg.UrlPrefix).Inc()
 		}
 		return "", err
 	}
-	c.metrics.Hits.WithLabelValues(urlKeyPrefix).Inc()
+	c.metrics.Hits.WithLabelValues(c.cfg.UrlPrefix).Inc()
 	return val, nil
 }
 
 // SetURL adds a key-value pair to the cache.
 func (c Cache) SetURL(ctx context.Context, key string, value string) error {
-	return c.rdb.Set(ctx, toInternalKey(key), value, urlTTL).Err()
+	return c.rdb.Set(ctx, c.toInternalKey(key), value, c.cfg.UrlTTL).Err()
 }
 
-func toInternalKey(s string) string {
-	return fmt.Sprintf("%s:%s", urlKeyPrefix, s)
+func (c Cache) toInternalKey(s string) string {
+	return fmt.Sprintf("%s:%s", c.cfg.UrlPrefix, s)
 }
 
 func (c Cache) Close() {

@@ -6,6 +6,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
+	github.com/hypedn/mflag v0.0.1
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/prometheus/client_golang v1.23.0
 	github.com/redis/go-redis/v9 v9.12.0

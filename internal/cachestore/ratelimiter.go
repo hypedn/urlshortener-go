@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/ndajr/urlshortener-go/internal/config"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -52,31 +53,19 @@ const script = `
 	return allowed and 1 or 0
 `
 
-// RateLimiterConfig holds the rate limiter configuration
-type RateLimiterConfig struct {
-	KeyPrefix    string        // Redis key prefix
-	Capacity     int           // Maximum tokens in bucket
-	RefillRate   int           // Tokens added per period
-	RefillPeriod time.Duration // How often to refill tokens
-}
-
 // RateLimiter implements a Redis-based token bucket rate limiter
 type RateLimiter struct {
 	logger *slog.Logger
 	client *redis.Client
-	config RateLimiterConfig
+	config config.RateLimiter
 }
 
 // NewRateLimiter creates a new rate limiter with the given configuration
-func NewRateLimiter(logger *slog.Logger, cache *Cache, config RateLimiterConfig) RateLimiter {
-	if config.KeyPrefix == "" {
-		config.KeyPrefix = "rate_limit:"
-	}
-
+func NewRateLimiter(logger *slog.Logger, cache *Cache, cfg config.RateLimiter) RateLimiter {
 	return RateLimiter{
 		logger: logger,
 		client: cache.rdb,
-		config: config,
+		config: cfg,
 	}
 }
 
